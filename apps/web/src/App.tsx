@@ -14,7 +14,7 @@ import { MemoFolderPicker } from "./components/MemoFolderPicker.js";
 import { MemoList } from "./components/MemoList.js";
 import { VaultSwitcher } from "./components/VaultSwitcher.js";
 
-type SaveState = "idle" | "error";
+type SaveState = "idle" | "save-error" | "upload-error";
 
 function formatMeta(iso: string) {
   const d = new Date(iso);
@@ -367,7 +367,7 @@ export function App() {
           return next;
         });
       } catch {
-        setSaveState("error");
+        setSaveState("save-error");
       }
     },
     []
@@ -709,6 +709,7 @@ export function App() {
               memoId={selectedMemo.id}
               content={content}
               onChange={handleContentChange}
+              onUploadError={() => setSaveState("upload-error")}
             />
           </div>
         ) : (
@@ -719,12 +720,16 @@ export function App() {
           </div>
         )}
 
-        {saveState === "error" && (
+        {saveState !== "idle" && (
           <div className="absolute bottom-5 right-6 flex items-center gap-3 rounded-lg border border-danger/30 bg-danger/10 px-3.5 py-2 font-mono text-[11px] text-danger">
-            保存できませんでした
-            <button type="button" onClick={handleRetry} className="underline">
-              再試行
-            </button>
+            {saveState === "save-error"
+              ? "保存できませんでした"
+              : "画像を追加できませんでした"}
+            {saveState === "save-error" && (
+              <button type="button" onClick={handleRetry} className="underline">
+                再試行
+              </button>
+            )}
           </div>
         )}
       </main>

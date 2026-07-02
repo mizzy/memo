@@ -13,5 +13,11 @@
       "database_name": "memo-db",
       "database_id": "c9c8e1be-92b7-400b-a29c-840a7d9af606"
     }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "IMAGES",
+      "bucket_name": "memo-images"
+    }
   ]
 }
