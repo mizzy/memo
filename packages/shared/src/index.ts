@@ -5,6 +5,10 @@ export type Vault = {
   updatedAt: string;
 };
 
+export type VaultWithCount = Vault & {
+  memoCount: number;
+};
+
 export type Memo = {
   id: string;
   vaultId: string;

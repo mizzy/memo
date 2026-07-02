@@ -1,12 +1,122 @@
 @import "tailwindcss";
 
+@theme {
+  --color-night: #131722;
+  --color-night-deep: #0b0e16;
+  --color-night-panel: #171c29;
+  --color-night-raised: #1e2434;
+  --color-line: #2a3145;
+  --color-fg: #e6e3da;
+  --color-fg-dim: #9a97a4;
+  --color-fg-faint: #5d5c6b;
+  --color-lamp: #e0a458;
+  --color-lamp-bright: #edb56b;
+  --color-danger: #e2795e;
+
+  --font-display: "Fraunces", "Shippori Mincho", serif;
+  --font-body: "Zen Kaku Gothic New", sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--color-night);
+  color: var(--color-fg);
+}
+
+/* ランプの光 */
+.lamp-glow {
+  background:
+    radial-gradient(
+      ellipse 70% 50% at 78% 0%,
+      rgba(224, 164, 88, 0.14),
+      transparent 60%
+    ),
+    var(--color-night);
+}
+
+/* Tiptapエディタ本文 */
 .tiptap {
   outline: none;
-  min-height: 300px;
+  min-height: 40vh;
+  font-size: 15px;
+  line-height: 2.05;
+  color: var(--color-fg);
+  max-width: 40em;
+}
+
+.tiptap p + p {
+  margin-top: 1.3em;
+}
+
+.tiptap h1,
+.tiptap h2,
+.tiptap h3 {
+  font-weight: 700;
+  margin: 1.6em 0 0.6em;
+}
+.tiptap h1 { font-size: 1.5em; }
+.tiptap h2 { font-size: 1.25em; }
+.tiptap h3 { font-size: 1.1em; }
+
+.tiptap strong {
+  color: var(--color-lamp);
+  font-weight: 700;
+}
+
+.tiptap code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background: var(--color-night-raised);
+  border: 1px solid var(--color-line);
+  border-radius: 5px;
+  padding: 1px 6px;
+  color: var(--color-lamp);
+}
+
+.tiptap pre {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background: var(--color-night-deep);
+  border: 1px solid var(--color-line);
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin: 1.2em 0;
+  overflow-x: auto;
+}
+
+.tiptap pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--color-fg);
+}
+
+.tiptap ul,
+.tiptap ol {
+  padding-left: 1.5em;
+  margin: 0.8em 0;
+}
+
+.tiptap li + li {
+  margin-top: 0.3em;
+}
+
+.tiptap blockquote {
+  border-left: 3px solid var(--color-lamp);
+  padding-left: 1em;
+  margin: 1.2em 0;
+  color: var(--color-fg-dim);
 }
 
 .tiptap p.is-editor-empty:first-child::before {
-  color: #9ca3af;
+  color: var(--color-fg-faint);
   content: attr(data-placeholder);
   float: left;
   height: 0;

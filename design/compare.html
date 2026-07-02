@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>デザイン方向性の比較</title>
+<style>
+  body {
+    margin: 0;
+    background: #17181c;
+    color: #ddd;
+    font-family: sans-serif;
+    padding: 32px;
+  }
+  h1 { font-size: 16px; font-weight: 600; margin: 0 0 24px; }
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+  }
+  figure { margin: 0; }
+  figcaption { font-size: 13px; margin-bottom: 10px; color: #aaa; }
+  .frame {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1560 / 790;
+    overflow: hidden;
+    border-radius: 8px;
+    border: 1px solid #333;
+  }
+  .frame iframe {
+    width: 1560px;
+    height: 790px;
+    border: 0;
+    zoom: 0.45;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+<h1>デザイン方向性の比較 — クリックで単体表示</h1>
+<div class="grid">
+  <figure>
+    <figcaption>A — 紙とインク</figcaption>
+    <a class="frame" href="direction-a-paper.html" target="_blank"><iframe src="direction-a-paper.html" scrolling="no"></iframe></a>
+  </figure>
+  <figure>
+    <figcaption>B — ターミナル</figcaption>
+    <a class="frame" href="direction-b-terminal.html" target="_blank"><iframe src="direction-b-terminal.html" scrolling="no"></iframe></a>
+  </figure>
+  <figure>
+    <figcaption>C — 夜の書斎</figcaption>
+    <a class="frame" href="direction-c-midnight.html" target="_blank"><iframe src="direction-c-midnight.html" scrolling="no"></iframe></a>
+  </figure>
+  <figure>
+    <figcaption>D — 夜の書斎 × 道具 (C+B)</figcaption>
+    <a class="frame" href="direction-d-hybrid.html" target="_blank"><iframe src="direction-d-hybrid.html" scrolling="no"></iframe></a>
+  </figure>
+</div>
+</body>
+</html>

@@ -4,15 +4,16 @@ import Placeholder from "@tiptap/extension-placeholder";
 import { useEffect } from "react";
 
 type Props = {
+  memoId: string;
   content: string;
   onChange: (content: string) => void;
 };
 
-export function Editor({ content, onChange }: Props) {
+export function Editor({ memoId, content, onChange }: Props) {
   const editor = useEditor({
     extensions: [
       StarterKit,
-      Placeholder.configure({ placeholder: "メモを書く..." }),
+      Placeholder.configure({ placeholder: "書きはじめる…" }),
     ],
     content,
     onUpdate: ({ editor }) => {
@@ -20,15 +21,13 @@ export function Editor({ content, onChange }: Props) {
     },
   });
 
+  // メモ切り替え時のみ内容を差し替える (入力中のカーソル飛びを防ぐ)
   useEffect(() => {
-    if (editor && content !== editor.getHTML()) {
+    if (editor) {
       editor.commands.setContent(content);
     }
-  }, [content, editor]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [memoId, editor]);
 
-  return (
-    <div className="border border-zinc-700 rounded-lg p-4 bg-zinc-900">
-      <EditorContent editor={editor} />
-    </div>
-  );
+  return <EditorContent editor={editor} />;
 }
