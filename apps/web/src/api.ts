@@ -84,4 +84,12 @@ export const api = {
     delete: (id: string) =>
       request<{ ok: boolean }>(`/memos/${id}`, { method: "DELETE" }),
   },
+  images: {
+    upload: (blob: Blob) =>
+      request<{ key: string }>("/images", {
+        method: "POST",
+        body: blob,
+        headers: { "Content-Type": blob.type || "image/webp" },
+      }),
+  },
 };

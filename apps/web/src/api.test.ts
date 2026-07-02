@@ -19,4 +19,25 @@ describe("api client", () => {
       expect.any(Object)
     );
   });
+
+  test("uploads image blobs with their content type", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ key: "image.webp" }), {
+        status: 201,
+        headers: { "Content-Type": "application/json" },
+      })
+    );
+    const blob = new Blob(["webp"], { type: "image/webp" });
+
+    await api.images.upload(blob);
+
+    expect(fetch).toHaveBeenCalledWith(
+      "/api/images",
+      expect.objectContaining({
+        method: "POST",
+        body: blob,
+        headers: expect.objectContaining({ "Content-Type": "image/webp" }),
+      })
+    );
+  });
 });
