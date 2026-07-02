@@ -1,12 +1,17 @@
 {
-  "name": "memo-api",
+  "name": "memo",
   "main": "src/index.ts",
   "compatibility_date": "2025-06-30",
+  "assets": {
+    "directory": "../web/dist",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "memo-db",
-      "database_id": "TODO"
+      "database_id": "c9c8e1be-92b7-400b-a29c-840a7d9af606"
     }
   ]
 }
