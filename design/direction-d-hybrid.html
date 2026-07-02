@@ -49,13 +49,8 @@
     border-radius: 14px;
     box-shadow: 0 1px 0 rgba(255,255,255,.04) inset, 0 32px 64px -20px rgba(0,0,0,.7);
     display: grid;
-    grid-template-rows: 1fr 30px;
-    overflow: hidden;
-  }
-  .cols {
-    display: grid;
     grid-template-columns: 208px 276px 1fr;
-    min-height: 0;
+    overflow: hidden;
   }
 
   .rail {
@@ -203,19 +198,20 @@
     color: var(--lamp);
   }
 
-  .statusline {
-    border-top: 1px solid var(--line);
-    background: rgba(11,14,22,.6);
+  /* 保存失敗時のみ表示される警告 (通常は出ない) */
+  .save-error {
+    position: absolute;
+    right: 24px;
+    bottom: 20px;
     font-family: "IBM Plex Mono", monospace;
-    font-size: 10.5px;
-    color: var(--fg-faint);
-    display: flex;
-    align-items: center;
-    gap: 18px;
-    padding: 0 16px;
+    font-size: 11px;
+    color: #e2795e;
+    background: rgba(226,121,94,.08);
+    border: 1px solid rgba(226,121,94,.3);
+    border-radius: 8px;
+    padding: 8px 14px;
   }
-  .statusline .ok { color: var(--ok); }
-  .statusline .right { margin-left: auto; }
+  .save-error b { font-weight: 500; text-decoration: underline; }
 
   /* ---- Mobile ---- */
   .mobile {
@@ -261,7 +257,6 @@
 <div>
   <div class="caption">D — 夜の書斎 × 道具（C + Bの実用要素）</div>
   <div class="desktop">
-    <div class="cols">
       <aside class="rail">
         <div class="wordmark">memo<i>.</i></div>
         <div class="rail-label">VAULTS</div>
@@ -296,12 +291,6 @@
           <p>設定は<code>wrangler.jsonc</code>に<code>run_worker_first</code>を足すだけ。分離は必要になってからで遅くない。</p>
         </div>
       </main>
-    </div>
-    <footer class="statusline">
-      <span class="ok">● 保存済み</span>
-      <span>日々の記録 / 128</span>
-      <span class="right">memo.mizzy.workers.dev</span>
-    </footer>
   </div>
 </div>
 
