@@ -1,16 +1,33 @@
 import { Hono } from "hono";
 import { drizzle } from "drizzle-orm/d1";
-import { eq, like, or, and, desc } from "drizzle-orm";
+import { eq, like, or, and, desc, isNull } from "drizzle-orm";
 import type { SQL } from "drizzle-orm";
-import { memos } from "../db/schema.js";
+import { folders, memos } from "../db/schema.js";
 import type { Env } from "../index.js";
 
 const app = new Hono<{ Bindings: Env }>();
+type Db = ReturnType<typeof drizzle>;
+
+async function validateMemoFolder(
+  db: Db,
+  vaultId: string,
+  folderId: string | null | undefined
+) {
+  if (folderId == null) return true;
+
+  const [folder] = await db
+    .select({ id: folders.id })
+    .from(folders)
+    .where(and(eq(folders.id, folderId), eq(folders.vaultId, vaultId)));
+
+  return Boolean(folder);
+}
 
 app.get("/", async (c) => {
   const db = drizzle(c.env.DB);
   const vaultId = c.req.query("vaultId");
   const search = c.req.query("q");
+  const folderId = c.req.query("folderId");
 
   const conditions: SQL[] = [];
 
@@ -25,6 +42,10 @@ app.get("/", async (c) => {
       like(memos.content, pattern)
     );
     if (searchCondition) conditions.push(searchCondition);
+  } else if (folderId === "root") {
+    conditions.push(isNull(memos.folderId));
+  } else if (folderId) {
+    conditions.push(eq(memos.folderId, folderId));
   }
 
   const result = await db
@@ -51,14 +72,20 @@ app.post("/", async (c) => {
   const db = drizzle(c.env.DB);
   const body = await c.req.json<{
     vaultId: string;
+    folderId?: string | null;
     title: string;
     content: string;
   }>();
+  if (!(await validateMemoFolder(db, body.vaultId, body.folderId))) {
+    return c.json({ error: "Folder does not belong to the memo vault" }, 422);
+  }
+
   const now = new Date().toISOString();
   const id = crypto.randomUUID();
   const memo = {
     id,
     vaultId: body.vaultId,
+    folderId: body.folderId ?? null,
     title: body.title,
     content: body.content,
     createdAt: now,
@@ -70,9 +97,31 @@ app.post("/", async (c) => {
 
 app.put("/:id", async (c) => {
   const db = drizzle(c.env.DB);
-  const body = await c.req.json<{ title?: string; content?: string }>();
+  const body = await c.req.json<{
+    folderId?: string | null;
+    title?: string;
+    content?: string;
+  }>();
+  const [current] = await db
+    .select({ id: memos.id, vaultId: memos.vaultId })
+    .from(memos)
+    .where(eq(memos.id, c.req.param("id")));
+  if (!current) {
+    return c.json({ error: "Not found" }, 404);
+  }
+
+  if (!(await validateMemoFolder(db, current.vaultId, body.folderId))) {
+    return c.json({ error: "Folder does not belong to the memo vault" }, 422);
+  }
+
   const now = new Date().toISOString();
-  const updates: Record<string, string> = { updatedAt: now };
+  const updates: {
+    folderId?: string | null;
+    title?: string;
+    content?: string;
+    updatedAt: string;
+  } = { updatedAt: now };
+  if (body.folderId !== undefined) updates.folderId = body.folderId;
   if (body.title !== undefined) updates.title = body.title;
   if (body.content !== undefined) updates.content = body.content;
   const result = await db

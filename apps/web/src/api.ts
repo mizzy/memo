@@ -1,4 +1,15 @@
-import type { Vault, VaultWithCount, Memo } from "@memo/shared";
+import type {
+  CreateFolderInput,
+  CreateMemoInput,
+  Folder,
+  FolderSelection,
+  FolderWithCount,
+  Memo,
+  UpdateFolderInput,
+  UpdateMemoInput,
+  Vault,
+  VaultWithCount,
+} from "@memo/shared";
 
 const BASE = "/api";
 
@@ -28,21 +39,44 @@ export const api = {
     delete: (id: string) =>
       request<{ ok: boolean }>(`/vaults/${id}`, { method: "DELETE" }),
   },
+  folders: {
+    list: (vaultId: string) =>
+      request<FolderWithCount[]>(
+        `/folders?vaultId=${encodeURIComponent(vaultId)}`
+      ),
+    create: (data: CreateFolderInput) =>
+      request<Folder>("/folders", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+    update: (id: string, data: UpdateFolderInput) =>
+      request<Folder>(`/folders/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+      }),
+    delete: (id: string) =>
+      request<{ ok: boolean }>(`/folders/${id}`, { method: "DELETE" }),
+  },
   memos: {
-    list: (params?: { vaultId?: string; q?: string }) => {
+    list: (params?: {
+      vaultId?: string;
+      folderId?: FolderSelection;
+      q?: string;
+    }) => {
       const sp = new URLSearchParams();
       if (params?.vaultId) sp.set("vaultId", params.vaultId);
+      if (params?.folderId) sp.set("folderId", params.folderId);
       if (params?.q) sp.set("q", params.q);
       const qs = sp.toString();
       return request<Memo[]>(`/memos${qs ? `?${qs}` : ""}`);
     },
     get: (id: string) => request<Memo>(`/memos/${id}`),
-    create: (data: { vaultId: string; title: string; content: string }) =>
+    create: (data: CreateMemoInput) =>
       request<Memo>("/memos", {
         method: "POST",
         body: JSON.stringify(data),
       }),
-    update: (id: string, data: { title?: string; content?: string }) =>
+    update: (id: string, data: UpdateMemoInput) =>
       request<Memo>(`/memos/${id}`, {
         method: "PUT",
         body: JSON.stringify(data),

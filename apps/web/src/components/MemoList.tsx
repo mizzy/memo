@@ -7,9 +7,9 @@ type Props = {
 };
 
 function stripHtml(html: string): string {
-  const div = document.createElement("div");
-  div.innerHTML = html;
-  return div.textContent ?? "";
+  return (
+    new DOMParser().parseFromString(html, "text/html").body.textContent ?? ""
+  );
 }
 
 function formatDate(iso: string): string {

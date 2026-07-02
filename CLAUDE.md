@@ -35,8 +35,9 @@ memo/
 ## Initial Scope
 
 - メモの作成・編集・一覧・検索
-- Vault機能 (メモのグループ管理、ObsidianのVaultに相当)
-- PWA対応 (iPhoneからホーム画面に追加して利用)
+- Vault機能(常に1つのVaultを開き、Vaultスイッチャーで切り替える)
+- フォルダ機能(Vault内に任意深さのフォルダ木を持ち、3ペイン構成でフォルダツリー/メモ一覧/エディタを表示する)
+- PWA対応(iPhoneからホーム画面に追加して利用)
 
 ## Design Decisions
 

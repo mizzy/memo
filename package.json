@@ -10,11 +10,19 @@
     "build": "turbo build",
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
+    "test": "turbo test",
+    "verify:folders": "npm test && npm run typecheck && npm run build",
     "deploy": "turbo build && npm run deploy --workspace @memo/api"
   },
   "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "latest",
+    "@testing-library/jest-dom": "latest",
+    "@testing-library/react": "latest",
+    "@testing-library/user-event": "latest",
+    "jsdom": "latest",
     "turbo": "^2.5.0",
-    "typescript": "^5.8.0"
+    "typescript": "^5.8.0",
+    "vitest": "latest"
   },
   "packageManager": "npm@10.9.2"
 }

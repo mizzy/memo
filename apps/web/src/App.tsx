@@ -1,17 +1,53 @@
-import { useState, useEffect, useCallback, useRef } from "react";
-import type { VaultWithCount, Memo } from "@memo/shared";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type {
+  FolderSelection,
+  FolderWithCount,
+  Memo,
+  VaultWithCount,
+} from "@memo/shared";
 import { api } from "./api.js";
+import { buildFolderTree, getFolderPath } from "./folders.js";
 import { Editor } from "./components/Editor.js";
+import { FolderRail } from "./components/FolderRail.js";
+import { MemoBreadcrumb } from "./components/MemoBreadcrumb.js";
+import { MemoFolderPicker } from "./components/MemoFolderPicker.js";
 import { MemoList } from "./components/MemoList.js";
-import { VaultRail } from "./components/VaultRail.js";
+import { VaultSwitcher } from "./components/VaultSwitcher.js";
 
 type SaveState = "idle" | "error";
+
+function formatMeta(iso: string) {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function parseSavedExpanded(value: string | null) {
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed)
+      ? parsed.filter((item): item is string => typeof item === "string")
+      : [];
+  } catch {
+    return [];
+  }
+}
 
 export function App() {
   const [vaults, setVaults] = useState<VaultWithCount[]>([]);
   const [selectedVault, setSelectedVault] = useState<VaultWithCount | null>(
     null
   );
+  const [folders, setFolders] = useState<FolderWithCount[]>([]);
+  const [selectedFolderId, setSelectedFolderId] =
+    useState<FolderSelection>("root");
+  const [expandedFolderIds, setExpandedFolderIds] = useState<Set<string>>(
+    new Set()
+  );
+  const [restoredExpandedVaultId, setRestoredExpandedVaultId] = useState<
+    string | null
+  >(null);
   const [memos, setMemos] = useState<Memo[]>([]);
   const [selectedMemo, setSelectedMemo] = useState<Memo | null>(null);
   const [title, setTitle] = useState("");
@@ -19,11 +55,29 @@ export function App() {
   const [search, setSearch] = useState("");
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [confirmingDelete, setConfirmingDelete] = useState(false);
-  const [mobileView, setMobileView] = useState<"list" | "editor">("list");
+  const [mobileView, setMobileView] = useState<"tree" | "list" | "editor">(
+    "tree"
+  );
 
   const searchRef = useRef<HTMLInputElement>(null);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingRef = useRef<{ title: string; content: string } | null>(null);
+
+  const selectedVaultId = selectedVault?.id ?? null;
+  const folderNodes = useMemo(() => buildFolderTree(folders), [folders]);
+  const selectedFolderPath = useMemo(
+    () =>
+      selectedFolderId === "root"
+        ? []
+        : getFolderPath(folders, selectedFolderId),
+    [folders, selectedFolderId]
+  );
+  const selectedFolderName = selectedFolderPath.at(-1)?.name ?? "(未分類)";
+  const rootMemoCount = Math.max(
+    (selectedVault?.memoCount ?? 0) -
+      folders.reduce((sum, folder) => sum + folder.memoCount, 0),
+    0
+  );
 
   const loadVaults = useCallback(async () => {
     const data = await api.vaults.list();
@@ -31,63 +85,133 @@ export function App() {
     return data;
   }, []);
 
+  const loadFolders = useCallback(async (vaultId: string) => {
+    const loadedFolders = await api.folders.list(vaultId);
+    setFolders(loadedFolders);
+    return loadedFolders;
+  }, []);
+
   useEffect(() => {
     loadVaults().then((data) => {
-      if (data.length > 0) {
-        setSelectedVault((current) => current ?? data[0]);
-      }
+      if (data.length === 0) return;
+      const lastVaultId = localStorage.getItem("memo:lastVaultId");
+      const restored =
+        data.find((vault) => vault.id === lastVaultId) ?? data[0];
+      setSelectedVault((current) => current ?? restored);
     });
   }, [loadVaults]);
 
   useEffect(() => {
-    if (!selectedVault) return;
+    if (!selectedVaultId) return;
+    let cancelled = false;
+    localStorage.setItem("memo:lastVaultId", selectedVaultId);
+    setFolders([]);
+    setRestoredExpandedVaultId(null);
+    setSelectedMemo(null);
+    setTitle("");
+    setContent("");
+    setConfirmingDelete(false);
+
+    loadFolders(selectedVaultId).then((loadedFolders) => {
+      if (cancelled) return;
+      const savedFolderId =
+        localStorage.getItem(`memo:vault:${selectedVaultId}:folderId`) ??
+        "root";
+      const restoredFolderId =
+        savedFolderId === "root" ||
+        loadedFolders.some((folder) => folder.id === savedFolderId)
+          ? savedFolderId
+          : "root";
+      const validFolderIds = new Set(
+        loadedFolders.map((folder) => folder.id)
+      );
+      const savedExpandedIds = parseSavedExpanded(
+        localStorage.getItem(
+          `memo:vault:${selectedVaultId}:expandedFolderIds`
+        )
+      );
+
+      setSelectedFolderId(restoredFolderId);
+      setExpandedFolderIds(
+        new Set(
+          savedExpandedIds.filter((folderId) => validFolderIds.has(folderId))
+        )
+      );
+      setRestoredExpandedVaultId(selectedVaultId);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [loadFolders, selectedVaultId]);
+
+  useEffect(() => {
+    if (!selectedVaultId || restoredExpandedVaultId !== selectedVaultId) return;
+    localStorage.setItem(
+      `memo:vault:${selectedVaultId}:expandedFolderIds`,
+      JSON.stringify(Array.from(expandedFolderIds))
+    );
+  }, [expandedFolderIds, restoredExpandedVaultId, selectedVaultId]);
+
+  useEffect(() => {
+    if (!selectedVaultId) return;
     let cancelled = false;
     const timer = setTimeout(async () => {
-      const data = await api.memos.list({
-        vaultId: selectedVault.id,
-        q: search || undefined,
-      });
+      const trimmedSearch = search.trim();
+      const params = trimmedSearch
+        ? { vaultId: selectedVaultId, q: trimmedSearch }
+        : { vaultId: selectedVaultId, folderId: selectedFolderId };
+      const data = await api.memos.list(params);
       if (!cancelled) setMemos(data);
     }, search ? 250 : 0);
+
     return () => {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [selectedVault, search]);
+  }, [selectedFolderId, selectedVaultId, search]);
 
-  // キーボードショートカット
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-        e.preventDefault();
+    const handler = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key === "k") {
+        event.preventDefault();
         searchRef.current?.focus();
       }
-      if ((e.metaKey || e.ctrlKey) && e.key === "n" && selectedVault) {
-        e.preventDefault();
+      if ((event.metaKey || event.ctrlKey) && event.key === "n" && selectedVaultId) {
+        event.preventDefault();
         handleCreateMemo();
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedVault]);
+  }, [selectedVaultId, selectedFolderId]);
 
   const bumpVaultCount = (vaultId: string, delta: number) => {
     setVaults((prev) =>
-      prev.map((v) =>
-        v.id === vaultId ? { ...v, memoCount: v.memoCount + delta } : v
+      prev.map((vault) =>
+        vault.id === vaultId
+          ? { ...vault, memoCount: vault.memoCount + delta }
+          : vault
       )
+    );
+    setSelectedVault((current) =>
+      current?.id === vaultId
+        ? { ...current, memoCount: current.memoCount + delta }
+        : current
     );
   };
 
   const handleSelectVault = (vault: VaultWithCount) => {
     setSelectedVault(vault);
+    setSelectedFolderId("root");
+    setExpandedFolderIds(new Set());
     setSelectedMemo(null);
     setSearch("");
     setTitle("");
     setContent("");
     setConfirmingDelete(false);
-    setMobileView("list");
+    setMobileView("tree");
   };
 
   const handleCreateVault = async (name: string) => {
@@ -95,6 +219,61 @@ export function App() {
     const withCount = { ...vault, memoCount: 0 };
     setVaults((prev) => [...prev, withCount]);
     handleSelectVault(withCount);
+  };
+
+  const handleSelectFolder = (folderId: FolderSelection) => {
+    setSelectedFolderId(folderId);
+    if (selectedVault) {
+      localStorage.setItem(`memo:vault:${selectedVault.id}:folderId`, folderId);
+    }
+    setSelectedMemo(null);
+    setTitle("");
+    setContent("");
+    setConfirmingDelete(false);
+    setMobileView("list");
+  };
+
+  const handleToggleFolder = (folderId: string) => {
+    setExpandedFolderIds((current) => {
+      const next = new Set(current);
+      if (next.has(folderId)) next.delete(folderId);
+      else next.add(folderId);
+      return next;
+    });
+  };
+
+  const refreshFoldersForSelectedVault = async () => {
+    if (!selectedVaultId) return [];
+    return loadFolders(selectedVaultId);
+  };
+
+  const handleCreateFolder = async (parentId: string, name: string) => {
+    if (!selectedVault) return;
+    await api.folders.create({ vaultId: selectedVault.id, parentId, name });
+    setExpandedFolderIds((current) => new Set(current).add(parentId));
+    await refreshFoldersForSelectedVault();
+  };
+
+  const handleRenameFolder = async (folderId: string, name: string) => {
+    await api.folders.update(folderId, { name });
+    await refreshFoldersForSelectedVault();
+  };
+
+  const handleDeleteFolder = async (folderId: string) => {
+    await api.folders.delete(folderId);
+    if (selectedFolderId === folderId) handleSelectFolder("root");
+    await refreshFoldersForSelectedVault();
+  };
+
+  const handleMoveFolder = async (
+    folderId: string,
+    parentId: string | null
+  ) => {
+    await api.folders.update(folderId, { parentId });
+    if (parentId) {
+      setExpandedFolderIds((current) => new Set(current).add(parentId));
+    }
+    await refreshFoldersForSelectedVault();
   };
 
   const handleSelectMemo = (memo: Memo) => {
@@ -110,11 +289,13 @@ export function App() {
     if (!selectedVault) return;
     const memo = await api.memos.create({
       vaultId: selectedVault.id,
+      folderId: selectedFolderId === "root" ? null : selectedFolderId,
       title: "",
       content: "",
     });
     setMemos((prev) => [memo, ...prev]);
     bumpVaultCount(selectedVault.id, 1);
+    await refreshFoldersForSelectedVault();
     handleSelectMemo(memo);
   };
 
@@ -128,7 +309,9 @@ export function App() {
           current?.id === updated.id ? updated : current
         );
         setMemos((prev) => {
-          const next = prev.map((m) => (m.id === updated.id ? updated : m));
+          const next = prev.map((memo) =>
+            memo.id === updated.id ? updated : memo
+          );
           next.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
           return next;
         });
@@ -150,7 +333,7 @@ export function App() {
         }
       }, 500);
     },
-    [selectedMemo, doSave]
+    [doSave, selectedMemo]
   );
 
   const flushPendingSave = () => {
@@ -166,14 +349,29 @@ export function App() {
     }
   };
 
-  const handleTitleChange = (v: string) => {
-    setTitle(v);
-    autoSave(v, content);
+  const handleTitleChange = (value: string) => {
+    setTitle(value);
+    autoSave(value, content);
   };
 
-  const handleContentChange = (v: string) => {
-    setContent(v);
-    autoSave(title, v);
+  const handleContentChange = (value: string) => {
+    setContent(value);
+    autoSave(title, value);
+  };
+
+  const handleMoveMemo = async (folderId: string | null) => {
+    if (!selectedMemo) return;
+    flushPendingSave();
+    const updated = await api.memos.update(selectedMemo.id, { folderId });
+    const targetSelection = folderId ?? "root";
+    setSelectedMemo(updated);
+    setMemos((prev) => {
+      if (search.trim() || targetSelection === selectedFolderId) {
+        return prev.map((memo) => (memo.id === updated.id ? updated : memo));
+      }
+      return prev.filter((memo) => memo.id !== updated.id);
+    });
+    await refreshFoldersForSelectedVault();
   };
 
   const handleDeleteMemo = async () => {
@@ -183,73 +381,154 @@ export function App() {
       setTimeout(() => setConfirmingDelete(false), 3000);
       return;
     }
+
     await api.memos.delete(selectedMemo.id);
-    setMemos((prev) => prev.filter((m) => m.id !== selectedMemo.id));
+    setMemos((prev) => prev.filter((memo) => memo.id !== selectedMemo.id));
     bumpVaultCount(selectedVault.id, -1);
     setSelectedMemo(null);
     setTitle("");
     setContent("");
     setConfirmingDelete(false);
+    await refreshFoldersForSelectedVault();
     setMobileView("list");
   };
 
-  const formatMeta = (memo: Memo) => {
-    const d = new Date(memo.updatedAt);
-    const pad = (n: number) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  const renderSearchBox = () => (
+    <div className="p-3.5 pb-2">
+      <div className="flex items-center justify-between rounded-[9px] border border-line bg-night px-3.5 py-2">
+        <input
+          ref={searchRef}
+          type="text"
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder="検索…"
+          className="w-full bg-transparent text-[12.5px] text-fg placeholder-fg-faint focus:outline-none"
+        />
+        <kbd className="hidden rounded border border-line px-1.5 py-px font-mono text-[10px] text-fg-faint md:block">
+          ⌘K
+        </kbd>
+      </div>
+    </div>
+  );
+
+  const renderMobileNode = (node: (typeof folderNodes)[number]) => {
+    const expanded = expandedFolderIds.has(node.id);
+    return (
+      <div key={node.id}>
+        <div
+          className={`flex items-center rounded-lg ${
+            node.id === selectedFolderId
+              ? "bg-night-raised text-lamp"
+              : "text-fg"
+          }`}
+          style={{ marginLeft: node.depth * 22 }}
+        >
+          <button
+            type="button"
+            aria-label={`${node.name}を開閉`}
+            onClick={() => handleToggleFolder(node.id)}
+            className="flex h-10 w-8 shrink-0 items-center justify-center font-mono text-[10px] text-fg-faint"
+          >
+            {node.children.length > 0 ? (expanded ? "▾" : "▸") : "·"}
+          </button>
+          <button
+            type="button"
+            aria-label={node.name}
+            onClick={() => handleSelectFolder(node.id)}
+            className="flex min-w-0 flex-1 items-center gap-2 py-2.5 pr-3 text-left text-sm"
+          >
+            <span className="min-w-0 flex-1 truncate">{node.name}</span>
+            <span className="font-mono text-[10px] text-fg-faint">
+              {node.totalMemoCount}
+            </span>
+            <span className="text-fg-faint">›</span>
+          </button>
+        </div>
+        {expanded && node.children.map(renderMobileNode)}
+      </div>
+    );
   };
 
   return (
     <div className="lamp-glow flex h-full overflow-hidden">
-      <VaultRail
+      <FolderRail
         vaults={vaults}
-        selectedId={selectedVault?.id ?? null}
-        onSelect={handleSelectVault}
-        onCreate={handleCreateVault}
+        selectedVault={selectedVault}
+        folders={folders}
+        folderNodes={folderNodes}
+        selectedFolderId={selectedFolderId}
+        expandedFolderIds={expandedFolderIds}
+        rootMemoCount={rootMemoCount}
+        onSelectVault={handleSelectVault}
+        onCreateVault={handleCreateVault}
+        onSelectFolder={handleSelectFolder}
+        onToggleFolder={handleToggleFolder}
+        onCreateFolder={handleCreateFolder}
+        onRenameFolder={handleRenameFolder}
+        onDeleteFolder={handleDeleteFolder}
+        onMoveFolder={handleMoveFolder}
       />
 
-      {/* メモリスト (モバイルではリストビュー時のみ) */}
+      <section
+        className={`w-full flex-col border-r border-line bg-night-deep/55 md:hidden ${
+          mobileView === "tree" ? "flex" : "hidden"
+        }`}
+      >
+        <div className="flex items-center gap-3 border-b border-line px-5 pb-3 pt-5">
+          <div className="font-display text-lg font-semibold">
+            memo<span className="text-lamp">.</span>
+          </div>
+          <div className="ml-auto w-40">
+            <VaultSwitcher
+              vaults={vaults}
+              selectedVault={selectedVault}
+              onSelect={handleSelectVault}
+              onCreate={handleCreateVault}
+            />
+          </div>
+        </div>
+        {renderSearchBox()}
+        <div className="min-h-0 flex-1 overflow-y-auto px-3">
+          {folderNodes.map(renderMobileNode)}
+          <button
+            type="button"
+            aria-label="(未分類)"
+            onClick={() => handleSelectFolder("root")}
+            className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm text-fg-faint"
+          >
+            <span className="min-w-0 flex-1 truncate">(未分類)</span>
+            <span className="font-mono text-[10px]">{rootMemoCount}</span>
+            <span>›</span>
+          </button>
+        </div>
+      </section>
+
       <section
         className={`w-full flex-col border-r border-line bg-night-panel md:flex md:w-72 md:shrink-0 ${
           mobileView === "list" ? "flex" : "hidden"
         }`}
       >
-        {/* モバイルヘッダ */}
-        <div className="flex items-baseline justify-between border-b border-line px-5 pb-3 pt-5 md:hidden">
-          <div className="font-display text-lg font-semibold">
-            memo<span className="text-lamp">.</span>
-          </div>
-          <select
-            value={selectedVault?.id ?? ""}
-            onChange={(e) => {
-              const vault = vaults.find((v) => v.id === e.target.value);
-              if (vault) handleSelectVault(vault);
-            }}
-            className="max-w-40 rounded-md border border-line bg-night px-2 py-1 text-xs text-fg-dim focus:outline-none"
+        <div className="flex items-center gap-3 border-b border-line px-5 pb-3 pt-5 md:hidden">
+          <button
+            type="button"
+            onClick={() => setMobileView("tree")}
+            className="text-sm text-fg-dim"
           >
-            {vaults.map((v) => (
-              <option key={v.id} value={v.id}>
-                {v.name}
-              </option>
-            ))}
-          </select>
+            ‹ 戻る
+          </button>
+          <div className="min-w-0 flex-1 truncate text-sm font-bold">
+            {selectedFolderName}
+          </div>
+          <span className="font-mono text-[10px] text-fg-faint">
+            {memos.length}
+          </span>
         </div>
 
-        <div className="p-3.5 pb-2">
-          <div className="flex items-center justify-between rounded-[9px] border border-line bg-night px-3.5 py-2">
-            <input
-              ref={searchRef}
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="検索…"
-              className="w-full bg-transparent text-[12.5px] text-fg placeholder-fg-faint focus:outline-none"
-            />
-            <kbd className="hidden rounded border border-line px-1.5 py-px font-mono text-[10px] text-fg-faint md:block">
-              ⌘K
-            </kbd>
-          </div>
-        </div>
+        {renderSearchBox()}
+        <MemoBreadcrumb
+          path={selectedFolderPath}
+          vaultName={selectedVault?.name ?? ""}
+        />
 
         <div className="min-h-0 flex-1 overflow-y-auto">
           {selectedVault && (
@@ -261,11 +540,12 @@ export function App() {
           )}
         </div>
 
-        {/* デスクトップ: 新規メモ */}
         {selectedVault && (
           <div className="hidden border-t border-line p-3 md:block">
             <button
+              type="button"
               onClick={handleCreateMemo}
+              aria-label="＋ 新しいメモ ⌘N"
               className="w-full rounded-lg bg-night-raised px-3 py-2 text-sm text-fg-dim transition-colors hover:text-fg"
             >
               ＋ 新しいメモ
@@ -276,9 +556,9 @@ export function App() {
           </div>
         )}
 
-        {/* モバイル: FAB */}
         {selectedVault && (
           <button
+            type="button"
             onClick={handleCreateMemo}
             className="absolute bottom-6 right-5 flex h-14 w-14 items-center justify-center rounded-full bg-[linear-gradient(160deg,var(--color-lamp-bright),var(--color-lamp))] text-2xl text-night shadow-[0_10px_28px_-6px_rgba(224,164,88,0.55)] md:hidden"
             aria-label="新しいメモ"
@@ -288,7 +568,6 @@ export function App() {
         )}
       </section>
 
-      {/* エディタ (モバイルではエディタビュー時のみ) */}
       <main
         className={`relative min-w-0 flex-1 flex-col md:flex ${
           mobileView === "editor" ? "flex" : "hidden"
@@ -296,26 +575,27 @@ export function App() {
       >
         {selectedMemo ? (
           <div className="flex-1 overflow-y-auto px-6 py-8 md:px-14 md:py-12">
-            {/* モバイル: 戻る */}
             <button
+              type="button"
               onClick={() => {
                 flushPendingSave();
                 setMobileView("list");
               }}
               className="mb-4 text-sm text-fg-dim md:hidden"
             >
-              ← 一覧
+              ‹ {selectedFolderName}
             </button>
 
             <div className="flex items-start justify-between gap-4">
               <input
                 type="text"
                 value={title}
-                onChange={(e) => handleTitleChange(e.target.value)}
+                onChange={(event) => handleTitleChange(event.target.value)}
                 placeholder="タイトル"
                 className="w-full bg-transparent text-2xl font-bold text-fg placeholder-fg-faint focus:outline-none md:text-[27px]"
               />
               <button
+                type="button"
                 onClick={handleDeleteMemo}
                 className={`shrink-0 rounded-md px-2.5 py-1 text-xs transition-colors ${
                   confirmingDelete
@@ -327,8 +607,13 @@ export function App() {
               </button>
             </div>
 
-            <div className="mb-8 mt-2 font-mono text-[10.5px] tracking-wider text-fg-faint">
-              {selectedVault?.name} / {formatMeta(selectedMemo)}
+            <div className="mb-8 mt-2 flex flex-wrap items-center gap-2 font-mono text-[10.5px] tracking-wider text-fg-faint">
+              <MemoFolderPicker
+                folders={folders}
+                value={selectedMemo.folderId}
+                onChange={handleMoveMemo}
+              />
+              <span>{formatMeta(selectedMemo.updatedAt)}</span>
             </div>
 
             <Editor
@@ -340,16 +625,15 @@ export function App() {
         ) : (
           <div className="hidden flex-1 items-center justify-center text-sm text-fg-faint md:flex">
             {selectedVault
-              ? "メモを選択するか、⌘N で新しいメモ"
+              ? "メモを選択するか、⌘Nで新しいメモ"
               : "Vaultを選択してください"}
           </div>
         )}
 
-        {/* 保存失敗時のみ表示 */}
         {saveState === "error" && (
           <div className="absolute bottom-5 right-6 flex items-center gap-3 rounded-lg border border-danger/30 bg-danger/10 px-3.5 py-2 font-mono text-[11px] text-danger">
             保存できませんでした
-            <button onClick={handleRetry} className="underline">
+            <button type="button" onClick={handleRetry} className="underline">
               再試行
             </button>
           </div>
