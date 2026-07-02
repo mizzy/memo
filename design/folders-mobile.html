@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>フォルダUI モバイルフロー</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --night: #131722;
+    --night-deep: #0b0e16;
+    --night-panel: #171c29;
+    --night-raised: #1e2434;
+    --line: #2a3145;
+    --fg: #e6e3da;
+    --fg-dim: #9a97a4;
+    --fg-faint: #5d5c6b;
+    --lamp: #e0a458;
+    --lamp-bright: #edb56b;
+    --lamp-glow: rgba(224,164,88,0.14);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Zen Kaku Gothic New", sans-serif;
+    background: #0b0e16;
+    color: var(--fg);
+    padding: 40px;
+    display: flex;
+    gap: 40px;
+    align-items: flex-start;
+  }
+  .col { display: flex; flex-direction: column; gap: 12px; }
+  .caption {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    color: var(--fg-dim);
+  }
+  .step {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10px;
+    color: var(--fg-faint);
+  }
+  .mobile {
+    width: 300px;
+    height: 620px;
+    background:
+      radial-gradient(ellipse 100% 40% at 80% 0%, var(--lamp-glow), transparent 60%),
+      var(--night);
+    border-radius: 34px;
+    border: 9px solid #05070c;
+    box-shadow: 0 24px 64px -16px rgba(0,0,0,.8);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+  .head {
+    padding: 20px 18px 12px;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    border-bottom: 1px solid var(--line);
+  }
+  .wordmark {
+    font-family: "Fraunces", serif;
+    font-size: 17px;
+    font-weight: 600;
+  }
+  .wordmark i { font-style: normal; color: var(--lamp); }
+  .back { font-size: 12.5px; color: var(--fg-dim); }
+  .head-title { font-size: 14px; font-weight: 700; }
+  .head .count {
+    margin-left: auto;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10px;
+    color: var(--fg-faint);
+  }
+
+  .search {
+    margin: 12px 14px 6px;
+    background: var(--night-deep);
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    padding: 8px 13px;
+    font-size: 12px;
+    color: var(--fg-faint);
+  }
+
+  .tree { padding: 8px 10px; font-size: 14px; }
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 10px;
+    border-radius: 9px;
+    color: var(--fg);
+  }
+  .row .chev { font-size: 10px; color: var(--fg-faint); width: 13px; }
+  .row .count {
+    margin-left: auto;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10.5px;
+    color: var(--fg-faint);
+  }
+  .row .arrow { color: var(--fg-faint); font-size: 12px; margin-left: 6px; }
+  .row.root { font-weight: 700; }
+  .indent-1 { padding-left: 32px; }
+  .indent-2 { padding-left: 54px; }
+  .row.folder::before { content: "▸"; font-size: 10px; color: var(--fg-faint); width: 13px; }
+  .row.folder.open::before { content: "▾"; }
+  .row.active {
+    background: linear-gradient(140deg, rgba(224,164,88,.12), rgba(224,164,88,.03) 55%), var(--night-raised);
+  }
+  .row.active .name { color: var(--lamp); }
+
+  .memo-card { margin: 3px 10px; padding: 12px 13px; border-radius: 10px; }
+  .memo-card h3 { font-size: 13.5px; font-weight: 700; margin-bottom: 4px; }
+  .memo-card p {
+    font-size: 11.5px;
+    line-height: 1.65;
+    color: var(--fg-dim);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .memo-card time {
+    display: block;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10px;
+    color: var(--fg-faint);
+    margin-top: 6px;
+  }
+  .breadcrumb {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10px;
+    color: var(--fg-faint);
+    padding: 8px 18px 2px;
+  }
+
+  .editor { padding: 18px 20px; overflow: hidden; }
+  .editor h1 { font-size: 19px; font-weight: 700; margin: 10px 0 6px; }
+  .editor .meta {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 9.5px;
+    color: var(--fg-faint);
+    margin-bottom: 18px;
+  }
+  .editor .body { font-size: 13.5px; line-height: 2; }
+  .editor .body p + p { margin-top: 1.2em; }
+  .editor .body strong { color: var(--lamp); }
+
+  .fab {
+    position: absolute;
+    bottom: 22px;
+    right: 18px;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: linear-gradient(160deg, var(--lamp-bright), var(--lamp));
+    color: var(--night);
+    font-size: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 28px -6px rgba(224,164,88,.55);
+  }
+</style>
+</head>
+<body>
+
+<div class="col">
+  <div class="caption">1. ホーム = 現Vaultのフォルダツリー</div>
+  <div class="step">ヘッダのVault名タップで切り替え、フォルダタップで一覧へ</div>
+  <div class="mobile">
+    <div class="head">
+      <span class="wordmark">memo<i>.</i></span>
+      <span class="head-title" style="margin-left:auto; font-size:12.5px; color:var(--fg-dim); font-weight:500;">日々の記録 ⇄</span>
+    </div>
+    <div class="search">検索…</div>
+    <div class="tree">
+      <div class="row folder open"><span class="name">技術メモ</span><span class="count">42</span><span class="arrow">›</span></div>
+      <div class="row folder indent-1 active"><span class="name">Cloudflare</span><span class="count">8</span><span class="arrow">›</span></div>
+      <div class="row folder indent-1"><span class="name">Terraform</span><span class="count">11</span><span class="arrow">›</span></div>
+      <div class="row folder"><span class="name">料理</span><span class="count">17</span><span class="arrow">›</span></div>
+      <div class="row"><span class="name" style="color:var(--fg-faint)">(未分類 12)</span><span class="arrow">›</span></div>
+    </div>
+    <div class="fab">＋</div>
+  </div>
+</div>
+
+<div class="col">
+  <div class="caption">2. フォルダ内のメモ一覧</div>
+  <div class="step">← でツリーに戻る、＋でこのフォルダに新規</div>
+  <div class="mobile">
+    <div class="head">
+      <span class="back">‹ 戻る</span>
+      <span class="head-title">Cloudflare</span>
+      <span class="count">8</span>
+    </div>
+    <div class="breadcrumb">技術メモ /</div>
+    <div>
+      <div class="memo-card active">
+        <h3>Cloudflare Workersの単一構成メモ</h3>
+        <p>静的アセットとAPIを1つのWorkerに同居させると、CORSも二重認証も消える。</p>
+        <time>2026-07-02 19:42</time>
+      </div>
+      <div class="memo-card">
+        <h3>D1のマイグレーション運用</h3>
+        <p>drizzle-kit generateで生成、wranglerでapply。ローカルと本番の2段階。</p>
+        <time>2026-06-30 15:20</time>
+      </div>
+      <div class="memo-card">
+        <h3>R2をTerraformバックエンドにする</h3>
+        <p>S3互換なのでbackend "s3"がそのまま使える。skip系フラグを忘れずに。</p>
+        <time>2026-06-29 11:08</time>
+      </div>
+    </div>
+    <div class="fab">＋</div>
+  </div>
+</div>
+
+<div class="col">
+  <div class="caption">3. エディタ</div>
+  <div class="step">← で一覧に戻る</div>
+  <div class="mobile">
+    <div class="editor">
+      <span class="back">‹ Cloudflare</span>
+      <h1>Cloudflare Workersの単一構成メモ</h1>
+      <div class="meta">技術メモ / Cloudflare — 2026-07-02</div>
+      <div class="body">
+        <p>静的アセットとAPIを1つのWorkerに同居させると、<strong>CORSも二重認証も消える</strong>。オリジンが1つなら、認証Cookieは何も考えなくても全リクエストに付いてくる。</p>
+        <p>制約はデプロイが一体になること。ただし個人ツールでは、フロントとAPIを別々に更新したい場面がそもそも少ない。</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

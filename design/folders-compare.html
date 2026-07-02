@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>フォルダUI 2案比較</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --night: #131722;
+    --night-deep: #0b0e16;
+    --night-panel: #171c29;
+    --night-raised: #1e2434;
+    --line: #2a3145;
+    --fg: #e6e3da;
+    --fg-dim: #9a97a4;
+    --fg-faint: #5d5c6b;
+    --lamp: #e0a458;
+    --lamp-glow: rgba(224,164,88,0.14);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Zen Kaku Gothic New", sans-serif;
+    background: #0b0e16;
+    color: var(--fg);
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 48px;
+    align-items: flex-start;
+  }
+  .caption {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 13px;
+    letter-spacing: 0.14em;
+    color: var(--fg-dim);
+    margin-bottom: 14px;
+  }
+  .desktop {
+    width: 1080px;
+    height: 620px;
+    background:
+      radial-gradient(ellipse 70% 50% at 78% 0%, var(--lamp-glow), transparent 60%),
+      var(--night);
+    border-radius: 14px;
+    box-shadow: 0 1px 0 rgba(255,255,255,.04) inset, 0 32px 64px -20px rgba(0,0,0,.7);
+    display: grid;
+    overflow: hidden;
+  }
+  .opt1 { grid-template-columns: 232px 264px 1fr; }
+  .opt2 { grid-template-columns: 264px 1fr; }
+
+  .rail {
+    background: rgba(11,14,22,.55);
+    border-right: 1px solid var(--line);
+    padding: 22px 12px;
+    overflow-y: auto;
+  }
+  .wordmark {
+    font-family: "Fraunces", serif;
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 18px;
+    padding: 0 10px;
+  }
+  .wordmark i { font-style: normal; color: var(--lamp); }
+
+  /* Vaultスイッチャー */
+  .vault-switcher {
+    margin: 0 2px 16px;
+    padding: 9px 12px;
+    background: var(--night-raised);
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    box-shadow: 0 1px 0 rgba(255,255,255,.05) inset;
+  }
+  .vault-switcher .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--lamp);
+    box-shadow: 0 0 10px var(--lamp);
+    flex-shrink: 0;
+  }
+  .vault-switcher .swap {
+    margin-left: auto;
+    color: var(--fg-faint);
+    font-size: 12px;
+  }
+  .vault-menu {
+    margin: -8px 2px 16px;
+    background: var(--night-deep);
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    overflow: hidden;
+    font-size: 12.5px;
+  }
+  .vault-menu .item {
+    padding: 8px 12px;
+    color: var(--fg-dim);
+    display: flex;
+    justify-content: space-between;
+  }
+  .vault-menu .item.current { color: var(--lamp); }
+  .vault-menu .item.new {
+    border-top: 1px solid var(--line);
+    color: var(--fg-faint);
+  }
+
+  /* ツリー共通 */
+  .tree { font-size: 13px; }
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5.5px 8px;
+    border-radius: 7px;
+    color: var(--fg-dim);
+    white-space: nowrap;
+  }
+  .row:hover { color: var(--fg); }
+  .row .chev {
+    width: 12px;
+    font-size: 9px;
+    color: var(--fg-faint);
+    flex-shrink: 0;
+  }
+  .row .count {
+    margin-left: auto;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10px;
+    color: var(--fg-faint);
+  }
+  .row.vault {
+    font-weight: 700;
+    color: var(--fg);
+    margin-top: 2px;
+  }
+  .row.vault .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--fg-faint);
+    flex-shrink: 0;
+  }
+  .row.vault.open .dot {
+    background: var(--lamp);
+    box-shadow: 0 0 10px var(--lamp);
+  }
+  .indent-1 { padding-left: 26px; }
+  .indent-2 { padding-left: 44px; }
+  .indent-3 { padding-left: 62px; }
+  .row.folder::before { content: "▸ "; font-size: 9px; color: var(--fg-faint); }
+  .row.folder.open::before { content: "▾ "; }
+  .row.active {
+    background: linear-gradient(140deg, rgba(224,164,88,.12), rgba(224,164,88,.03) 55%), var(--night-raised);
+    color: var(--lamp);
+    box-shadow: 0 1px 0 rgba(255,255,255,.05) inset;
+  }
+  .row.memo-leaf { color: var(--fg-dim); font-weight: 400; }
+  .row.memo-leaf::before { content: "·"; color: var(--fg-faint); width: 8px; }
+  .row.memo-leaf.active { color: var(--lamp); font-weight: 500; }
+  .collapsed-note { opacity: .55; }
+
+  /* 中ペイン (案1) */
+  .list {
+    border-right: 1px solid var(--line);
+    background: var(--night-panel);
+    display: flex;
+    flex-direction: column;
+  }
+  .search {
+    margin: 16px 14px 8px;
+    background: var(--night);
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    padding: 8px 13px;
+    font-size: 12px;
+    color: var(--fg-faint);
+    display: flex;
+    justify-content: space-between;
+  }
+  .breadcrumb {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10.5px;
+    color: var(--fg-faint);
+    padding: 6px 18px 4px;
+  }
+  .breadcrumb b { color: var(--fg-dim); font-weight: 500; }
+  .memo-card {
+    margin: 2px 8px;
+    padding: 11px 13px;
+    border-radius: 9px;
+  }
+  .memo-card h3 { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+  .memo-card p {
+    font-size: 11px;
+    line-height: 1.65;
+    color: var(--fg-dim);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .memo-card time {
+    display: block;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10px;
+    color: var(--fg-faint);
+    margin-top: 6px;
+  }
+  .memo-card.active {
+    background: linear-gradient(140deg, rgba(224,164,88,.12), rgba(224,164,88,.03) 55%), var(--night-raised);
+  }
+  .memo-card.active h3 { color: var(--lamp); }
+
+  /* エディタ */
+  .editor { padding: 44px 56px; min-width: 0; }
+  .editor h1 { font-size: 25px; font-weight: 700; margin-bottom: 8px; }
+  .editor .meta {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10.5px;
+    color: var(--fg-faint);
+    margin-bottom: 30px;
+  }
+  .editor .body { font-size: 14px; line-height: 2.05; max-width: 36em; }
+  .editor .body p + p { margin-top: 1.3em; }
+  .editor .body strong { color: var(--lamp); }
+</style>
+</head>
+<body>
+
+<div>
+  <div class="caption">案1改 — 3ペイン + Vaultスイッチャー: ツリーは現Vaultのフォルダのみ</div>
+  <div class="desktop opt1">
+    <aside class="rail">
+      <div class="wordmark">memo<i>.</i></div>
+      <div class="vault-switcher"><span class="dot"></span>日々の記録<span class="swap">⇄</span></div>
+      <div class="tree">
+        <div class="row folder open">技術メモ<span class="count">42</span></div>
+        <div class="row folder indent-1 active open">Cloudflare<span class="count">8</span></div>
+        <div class="row folder indent-1">Terraform<span class="count">11</span></div>
+        <div class="row folder">料理<span class="count">17</span></div>
+        <div class="row collapsed-note">(未分類 12)</div>
+      </div>
+    </aside>
+    <section class="list">
+      <div class="search"><span>検索…</span><span>⌘K</span></div>
+      <div class="breadcrumb">技術メモ / <b>Cloudflare</b></div>
+      <div class="memo-card active">
+        <h3>Cloudflare Workersの単一構成メモ</h3>
+        <p>静的アセットとAPIを1つのWorkerに同居させると、CORSも二重認証も消える。</p>
+        <time>2026-07-02 19:42</time>
+      </div>
+      <div class="memo-card">
+        <h3>D1のマイグレーション運用</h3>
+        <p>drizzle-kit generateで生成、wranglerでapply。ローカルと本番の2段階。</p>
+        <time>2026-06-30 15:20</time>
+      </div>
+      <div class="memo-card">
+        <h3>R2をTerraformバックエンドにする</h3>
+        <p>S3互換なのでbackend "s3"がそのまま使える。skip系フラグを忘れずに。</p>
+        <time>2026-06-29 11:08</time>
+      </div>
+    </section>
+    <main class="editor">
+      <h1>Cloudflare Workersの単一構成メモ</h1>
+      <div class="meta">技術メモ / Cloudflare — 2026-07-02 19:42</div>
+      <div class="body">
+        <p>静的アセットとAPIを1つのWorkerに同居させると、<strong>CORSも二重認証も消える</strong>。オリジンが1つなら、認証Cookieは何も考えなくても全リクエストに付いてくる。</p>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div>
+  <div class="caption">Vaultスイッチャー展開時 (クリックで切り替えメニュー)</div>
+  <div class="desktop opt1">
+    <aside class="rail">
+      <div class="wordmark">memo<i>.</i></div>
+      <div class="vault-switcher"><span class="dot"></span>日々の記録<span class="swap">⇄</span></div>
+      <div class="vault-menu">
+        <div class="item current">日々の記録<span>128</span></div>
+        <div class="item">仕事<span>54</span></div>
+        <div class="item">読書ノート<span>23</span></div>
+        <div class="item new">＋ 新しいVault</div>
+      </div>
+      <div class="tree" style="opacity:.35">
+        <div class="row folder open">技術メモ<span class="count">42</span></div>
+        <div class="row folder indent-1 active open">Cloudflare<span class="count">8</span></div>
+        <div class="row folder indent-1">Terraform<span class="count">11</span></div>
+        <div class="row folder">料理<span class="count">17</span></div>
+      </div>
+    </aside>
+    <section class="list" style="opacity:.35">
+      <div class="search"><span>検索…</span><span>⌘K</span></div>
+      <div class="breadcrumb">技術メモ / <b>Cloudflare</b></div>
+      <div class="memo-card active">
+        <h3>Cloudflare Workersの単一構成メモ</h3>
+        <p>静的アセットとAPIを1つのWorkerに同居させると、CORSも二重認証も消える。</p>
+        <time>2026-07-02 19:42</time>
+      </div>
+    </section>
+    <main class="editor" style="opacity:.35">
+      <h1>Cloudflare Workersの単一構成メモ</h1>
+      <div class="meta">技術メモ / Cloudflare — 2026-07-02 19:42</div>
+      <div class="body">
+        <p>静的アセットとAPIを1つのWorkerに同居させると、<strong>CORSも二重認証も消える</strong>。</p>
+      </div>
+    </main>
+  </div>
+</div>
+
+</body>
+</html>
