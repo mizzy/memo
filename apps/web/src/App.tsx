@@ -313,7 +313,7 @@ export function App() {
                 value={title}
                 onChange={(e) => handleTitleChange(e.target.value)}
                 placeholder="タイトル"
-                className="w-full bg-transparent font-display text-2xl font-semibold text-fg placeholder-fg-faint focus:outline-none md:text-3xl"
+                className="w-full bg-transparent text-2xl font-bold text-fg placeholder-fg-faint focus:outline-none md:text-[27px]"
               />
               <button
                 onClick={handleDeleteMemo}
