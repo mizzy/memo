@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { drizzle } from "drizzle-orm/d1";
-import { eq, like, or, desc } from "drizzle-orm";
+import { eq, like, or, and, desc } from "drizzle-orm";
+import type { SQL } from "drizzle-orm";
 import { memos } from "../db/schema.js";
 import type { Env } from "../index.js";
 
@@ -11,20 +12,26 @@ app.get("/", async (c) => {
   const vaultId = c.req.query("vaultId");
   const search = c.req.query("q");
 
-  let query = db.select().from(memos).$dynamic();
+  const conditions: SQL[] = [];
 
   if (vaultId) {
-    query = query.where(eq(memos.vaultId, vaultId));
+    conditions.push(eq(memos.vaultId, vaultId));
   }
 
   if (search) {
     const pattern = `%${search}%`;
-    query = query.where(
-      or(like(memos.title, pattern), like(memos.content, pattern))
+    const searchCondition = or(
+      like(memos.title, pattern),
+      like(memos.content, pattern)
     );
+    if (searchCondition) conditions.push(searchCondition);
   }
 
-  const result = await query.orderBy(desc(memos.updatedAt));
+  const result = await db
+    .select()
+    .from(memos)
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .orderBy(desc(memos.updatedAt));
   return c.json(result);
 });
 
