@@ -62,13 +62,24 @@ app.put("/:id", async (c) => {
 
 app.delete("/:id", async (c) => {
   const db = drizzle(c.env.DB);
-  const result = await db
-    .delete(vaults)
-    .where(eq(vaults.id, c.req.param("id")))
-    .returning();
-  if (result.length === 0) {
+  const id = c.req.param("id");
+  const existing = await db
+    .select({ id: vaults.id })
+    .from(vaults)
+    .where(eq(vaults.id, id));
+  if (existing.length === 0) {
     return c.json({ error: "Not found" }, 404);
   }
+
+  await c.env.DB.batch([
+    c.env.DB
+      .prepare("UPDATE folders SET parent_id = NULL WHERE vault_id = ?")
+      .bind(id),
+    c.env.DB.prepare("DELETE FROM memos WHERE vault_id = ?").bind(id),
+    c.env.DB.prepare("DELETE FROM folders WHERE vault_id = ?").bind(id),
+    c.env.DB.prepare("DELETE FROM vaults WHERE id = ?").bind(id),
+  ]);
+
   return c.json({ ok: true });
 });
 

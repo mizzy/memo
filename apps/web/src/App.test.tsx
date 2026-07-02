@@ -73,4 +73,40 @@ describe("App folders", () => {
       content: "",
     });
   });
+
+  test("shows an empty state after deleting the last vault", async () => {
+    const user = userEvent.setup();
+    mockApi.vaults.list
+      .mockResolvedValueOnce([vault("v1", "日々の記録", 2)])
+      .mockResolvedValueOnce([]);
+    mockApi.vaults.delete.mockResolvedValue({ ok: true });
+    mockApi.folders.list.mockResolvedValue([]);
+    mockApi.memos.list.mockResolvedValue([]);
+
+    render(<App />);
+
+    await user.click(
+      (await screen.findAllByRole("button", { name: "Vaultを切り替える" }))[0]
+    );
+    await user.click(
+      screen.getAllByRole("button", { name: "Vaultを削除" })[0]
+    );
+    await user.type(
+      screen.getByRole("textbox", { name: "確認用Vault名" }),
+      "日々の記録"
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Vaultを削除する" })
+    );
+
+    await waitFor(() =>
+      expect(mockApi.vaults.delete).toHaveBeenCalledWith("v1")
+    );
+    expect(
+      await screen.findByText("Vaultを作成してください")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("textbox", { name: "Vault名" })
+    ).toBeInTheDocument();
+  });
 });

@@ -15,6 +15,7 @@ describe("FolderRail", () => {
         rootMemoCount={1}
         onSelectVault={vi.fn()}
         onCreateVault={vi.fn()}
+        onDeleteVault={vi.fn()}
         onSelectFolder={vi.fn()}
         onToggleFolder={vi.fn()}
         onCreateFolder={vi.fn()}
