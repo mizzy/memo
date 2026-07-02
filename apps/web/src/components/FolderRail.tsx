@@ -13,6 +13,7 @@ type Props = {
   rootMemoCount: number;
   onSelectVault: (vault: VaultWithCount) => void;
   onCreateVault: (name: string) => void;
+  onDeleteVault: (vault: VaultWithCount) => void;
   onSelectFolder: (folderId: FolderSelection) => void;
   onToggleFolder: (folderId: string) => void;
   onCreateFolder: (parentId: string, name: string) => void;
@@ -32,6 +33,7 @@ export function FolderRail(props: Props) {
         selectedVault={props.selectedVault}
         onSelect={props.onSelectVault}
         onCreate={props.onCreateVault}
+        onDelete={props.onDeleteVault}
       />
       <FolderTree
         nodes={props.folderNodes}

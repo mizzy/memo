@@ -36,9 +36,11 @@ function parseSavedExpanded(value: string | null) {
 
 export function App() {
   const [vaults, setVaults] = useState<VaultWithCount[]>([]);
+  const [vaultsLoaded, setVaultsLoaded] = useState(false);
   const [selectedVault, setSelectedVault] = useState<VaultWithCount | null>(
     null
   );
+  const [newVaultName, setNewVaultName] = useState("");
   const [folders, setFolders] = useState<FolderWithCount[]>([]);
   const [selectedFolderId, setSelectedFolderId] =
     useState<FolderSelection>("root");
@@ -82,6 +84,7 @@ export function App() {
   const loadVaults = useCallback(async () => {
     const data = await api.vaults.list();
     setVaults(data);
+    setVaultsLoaded(true);
     return data;
   }, []);
 
@@ -219,6 +222,54 @@ export function App() {
     const withCount = { ...vault, memoCount: 0 };
     setVaults((prev) => [...prev, withCount]);
     handleSelectVault(withCount);
+  };
+
+  const clearSelectedContent = () => {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    pendingRef.current = null;
+    setSelectedFolderId("root");
+    setExpandedFolderIds(new Set());
+    setRestoredExpandedVaultId(null);
+    setFolders([]);
+    setMemos([]);
+    setSelectedMemo(null);
+    setTitle("");
+    setContent("");
+    setSearch("");
+    setConfirmingDelete(false);
+    setMobileView("tree");
+  };
+
+  const handleDeleteVault = async (vault: VaultWithCount) => {
+    await api.vaults.delete(vault.id);
+    const loadedVaults = await loadVaults();
+    const currentVault =
+      selectedVault && selectedVault.id !== vault.id
+        ? loadedVaults.find((item) => item.id === selectedVault.id) ?? null
+        : null;
+    const nextVault = currentVault ?? loadedVaults[0] ?? null;
+
+    if (!nextVault) {
+      localStorage.removeItem("memo:lastVaultId");
+      setSelectedVault(null);
+      clearSelectedContent();
+      return;
+    }
+
+    if (nextVault.id === selectedVault?.id) {
+      setSelectedVault(nextVault);
+      return;
+    }
+
+    handleSelectVault(nextVault);
+  };
+
+  const handleEmptyVaultSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const trimmed = newVaultName.trim();
+    if (!trimmed) return;
+    await handleCreateVault(trimmed);
+    setNewVaultName("");
   };
 
   const handleSelectFolder = (folderId: FolderSelection) => {
@@ -449,6 +500,42 @@ export function App() {
     );
   };
 
+  if (vaultsLoaded && vaults.length === 0 && !selectedVault) {
+    const canCreateVault = newVaultName.trim().length > 0;
+    return (
+      <div className="lamp-glow flex h-full items-center justify-center bg-night px-6">
+        <form
+          onSubmit={handleEmptyVaultSubmit}
+          className="w-full max-w-sm text-center"
+        >
+          <div className="font-display text-2xl font-semibold tracking-wide text-fg">
+            memo<span className="text-lamp">.</span>
+          </div>
+          <h1 className="mt-5 text-xl font-bold text-fg">
+            Vaultを作成してください
+          </h1>
+          <div className="mt-6 flex gap-2">
+            <input
+              aria-label="Vault名"
+              value={newVaultName}
+              onChange={(event) => setNewVaultName(event.target.value)}
+              autoFocus
+              className="min-w-0 flex-1 rounded-lg border border-line bg-night-raised px-3 py-2 text-sm text-fg placeholder-fg-faint focus:border-lamp/60 focus:outline-none"
+            />
+            <button
+              type="submit"
+              aria-label="Vaultを作成"
+              disabled={!canCreateVault}
+              className="rounded-lg bg-lamp px-4 py-2 text-sm font-bold text-night transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              作成
+            </button>
+          </div>
+        </form>
+      </div>
+    );
+  }
+
   return (
     <div className="lamp-glow flex h-full overflow-hidden">
       <FolderRail
@@ -461,6 +548,7 @@ export function App() {
         rootMemoCount={rootMemoCount}
         onSelectVault={handleSelectVault}
         onCreateVault={handleCreateVault}
+        onDeleteVault={handleDeleteVault}
         onSelectFolder={handleSelectFolder}
         onToggleFolder={handleToggleFolder}
         onCreateFolder={handleCreateFolder}
@@ -484,6 +572,7 @@ export function App() {
               selectedVault={selectedVault}
               onSelect={handleSelectVault}
               onCreate={handleCreateVault}
+              onDelete={handleDeleteVault}
             />
           </div>
         </div>

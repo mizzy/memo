@@ -14,6 +14,7 @@ describe("VaultSwitcher", () => {
         selectedVault={vault("v1", "日々の記録", 3)}
         onSelect={onSelect}
         onCreate={vi.fn()}
+        onDelete={vi.fn()}
       />
     );
 
@@ -21,5 +22,46 @@ describe("VaultSwitcher", () => {
     await user.click(screen.getByRole("menuitem", { name: "仕事 1" }));
 
     expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ id: "v2" }));
+  });
+
+  test("enables vault delete only when the name matches", async () => {
+    const user = userEvent.setup();
+    const onDelete = vi.fn();
+    render(
+      <VaultSwitcher
+        vaults={[vault("v1", "日々の記録", 3)]}
+        selectedVault={vault("v1", "日々の記録", 3)}
+        onSelect={vi.fn()}
+        onCreate={vi.fn()}
+        onDelete={onDelete}
+      />
+    );
+
+    await user.click(screen.getByRole("button", { name: "Vaultを切り替える" }));
+    await user.click(screen.getByRole("button", { name: "Vaultを削除" }));
+
+    const deleteButton = screen.getByRole("button", {
+      name: "Vaultを削除する",
+    });
+    expect(deleteButton).toBeDisabled();
+
+    await user.type(
+      screen.getByRole("textbox", { name: "確認用Vault名" }),
+      "日々"
+    );
+    expect(deleteButton).toBeDisabled();
+
+    await user.clear(screen.getByRole("textbox", { name: "確認用Vault名" }));
+    await user.type(
+      screen.getByRole("textbox", { name: "確認用Vault名" }),
+      "日々の記録"
+    );
+    expect(deleteButton).toBeEnabled();
+
+    await user.click(deleteButton);
+
+    expect(onDelete).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "v1" })
+    );
   });
 });
