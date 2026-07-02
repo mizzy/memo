@@ -1,4 +1,4 @@
-import type { Vault, Memo } from "@memo/shared";
+import type { Vault, VaultWithCount, Memo } from "@memo/shared";
 
 const BASE = "/api";
 
@@ -13,7 +13,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const api = {
   vaults: {
-    list: () => request<Vault[]>("/vaults"),
+    list: () => request<VaultWithCount[]>("/vaults"),
     get: (id: string) => request<Vault>(`/vaults/${id}`),
     create: (name: string) =>
       request<Vault>("/vaults", {

@@ -1,14 +1,25 @@
 import { Hono } from "hono";
 import { drizzle } from "drizzle-orm/d1";
-import { eq } from "drizzle-orm";
-import { vaults } from "../db/schema.js";
+import { eq, count } from "drizzle-orm";
+import { vaults, memos } from "../db/schema.js";
 import type { Env } from "../index.js";
 
 const app = new Hono<{ Bindings: Env }>();
 
 app.get("/", async (c) => {
   const db = drizzle(c.env.DB);
-  const result = await db.select().from(vaults).orderBy(vaults.updatedAt);
+  const result = await db
+    .select({
+      id: vaults.id,
+      name: vaults.name,
+      createdAt: vaults.createdAt,
+      updatedAt: vaults.updatedAt,
+      memoCount: count(memos.id),
+    })
+    .from(vaults)
+    .leftJoin(memos, eq(memos.vaultId, vaults.id))
+    .groupBy(vaults.id)
+    .orderBy(vaults.createdAt);
   return c.json(result);
 });
 
