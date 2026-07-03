@@ -9,6 +9,7 @@ import { api } from "./api.js";
 import { buildFolderTree, getFolderPath } from "./folders.js";
 import { Editor } from "./components/Editor.js";
 import { FolderRail } from "./components/FolderRail.js";
+import { FolderTree } from "./components/FolderTree.js";
 import { MemoBreadcrumb } from "./components/MemoBreadcrumb.js";
 import { MemoFolderPicker } from "./components/MemoFolderPicker.js";
 import { MemoList } from "./components/MemoList.js";
@@ -464,44 +465,6 @@ export function App() {
     </div>
   );
 
-  const renderMobileNode = (node: (typeof folderNodes)[number]) => {
-    const expanded = expandedFolderIds.has(node.id);
-    return (
-      <div key={node.id}>
-        <div
-          className={`flex items-center rounded-lg ${
-            node.id === selectedFolderId
-              ? "bg-night-raised text-lamp"
-              : "text-fg"
-          }`}
-          style={{ marginLeft: node.depth * 22 }}
-        >
-          <button
-            type="button"
-            aria-label={`${node.name}を開閉`}
-            onClick={() => handleToggleFolder(node.id)}
-            className="flex h-10 w-8 shrink-0 items-center justify-center font-mono text-[10px] text-fg-faint"
-          >
-            {node.children.length > 0 ? (expanded ? "▾" : "▸") : "·"}
-          </button>
-          <button
-            type="button"
-            aria-label={node.name}
-            onClick={() => handleSelectFolder(node.id)}
-            className="flex min-w-0 flex-1 items-center gap-2 py-2.5 pr-3 text-left text-sm"
-          >
-            <span className="min-w-0 flex-1 truncate">{node.name}</span>
-            <span className="font-mono text-[10px] text-fg-faint">
-              {node.totalMemoCount}
-            </span>
-            <span className="text-fg-faint">›</span>
-          </button>
-        </div>
-        {expanded && node.children.map(renderMobileNode)}
-      </div>
-    );
-  };
-
   if (vaultsLoaded && vaults.length === 0 && !selectedVault) {
     const canCreateVault = newVaultName.trim().length > 0;
     return (
@@ -580,17 +543,19 @@ export function App() {
         </div>
         {renderSearchBox()}
         <div className="min-h-0 flex-1 overflow-y-auto px-3">
-          {folderNodes.map(renderMobileNode)}
-          <button
-            type="button"
-            aria-label="(未分類)"
-            onClick={() => handleSelectFolder("root")}
-            className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm text-fg-faint"
-          >
-            <span className="min-w-0 flex-1 truncate">(未分類)</span>
-            <span className="font-mono text-[10px]">{rootMemoCount}</span>
-            <span>›</span>
-          </button>
+          <FolderTree
+            nodes={folderNodes}
+            selectedFolderId={selectedFolderId}
+            expandedFolderIds={expandedFolderIds}
+            rootMemoCount={rootMemoCount}
+            folders={folders}
+            onSelect={handleSelectFolder}
+            onToggle={handleToggleFolder}
+            onCreateChild={handleCreateFolder}
+            onRename={handleRenameFolder}
+            onDelete={handleDeleteFolder}
+            onMove={handleMoveFolder}
+          />
         </div>
       </section>
 
