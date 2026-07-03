@@ -1,0 +1,520 @@
+<!-- @dsCard group="Refined" -->
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>改善版 — 夜テーマを維持して洗練</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* --- 現状トークンを維持 --- */
+    --night: #131722;
+    --night-deep: #0b0e16;
+    --night-panel: #171c29;
+    --night-raised: #1e2434;
+    --line: #2a3145;
+    --fg: #e6e3da;
+    --fg-dim: #9a97a4;
+    --fg-faint: #5d5c6b;
+    --lamp: #e0a458;
+    --lamp-bright: #edb56b;
+    --danger: #e2795e;
+    --lamp-glow: rgba(224,164,88,0.13);
+    /* --- 洗練のための追加（既存色から派生） --- */
+    --hair: rgba(255,255,255,.055);       /* より繊細な罫線 */
+    --hair-strong: rgba(255,255,255,.09);
+    --raise-fill: rgba(224,164,88,.07);   /* 選択時の淡い面 */
+    --hover-fill: rgba(255,255,255,.035);
+    --sp: 8px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+  body {
+    font-family: "Zen Kaku Gothic New", sans-serif;
+    background:
+      radial-gradient(1200px 600px at 82% -8%, rgba(224,164,88,.05), transparent 55%),
+      var(--night-deep);
+    color: var(--fg);
+    padding: 48px;
+    display: flex;
+    gap: 52px;
+    align-items: flex-start;
+  }
+  .stack { display: flex; flex-direction: column; }
+  .caption {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11.5px;
+    letter-spacing: 0.14em;
+    color: var(--fg-dim);
+    margin-bottom: 16px;
+  }
+  .caption b { color: var(--lamp); font-weight: 500; }
+  .mono { font-family: "IBM Plex Mono", monospace; }
+
+  /* ============ DESKTOP ============ */
+  .desktop {
+    width: 1180px;
+    height: 744px;
+    background:
+      radial-gradient(ellipse 62% 44% at 80% -4%, var(--lamp-glow), transparent 62%),
+      var(--night);
+    border-radius: 16px;
+    box-shadow:
+      0 0 0 1px var(--hair),
+      0 1px 0 rgba(255,255,255,.05) inset,
+      0 40px 80px -28px rgba(0,0,0,.75);
+    display: grid;
+    grid-template-columns: 248px 320px 1fr;
+    overflow: hidden;
+  }
+
+  /* ---- 左レール ---- */
+  .rail {
+    background: rgba(9,12,19,.6);
+    border-right: 1px solid var(--hair);
+    padding: 22px 14px 16px;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .wordmark {
+    font-family: "Fraunces", serif;
+    font-size: 21px;
+    font-weight: 600;
+    letter-spacing: .01em;
+    padding: 0 8px;
+    margin-bottom: 20px;
+  }
+  .wordmark i { font-style: normal; color: var(--lamp); }
+
+  .vault {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 10px 12px;
+    background: var(--night-raised);
+    border: 1px solid var(--hair-strong);
+    border-radius: 11px;
+    box-shadow: 0 1px 0 rgba(255,255,255,.05) inset, 0 6px 16px -10px rgba(0,0,0,.6);
+    margin-bottom: 22px;
+    cursor: pointer;
+  }
+  .vault .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--lamp); box-shadow: 0 0 10px var(--lamp); flex-shrink: 0; }
+  .vault .vname { font-size: 13.5px; font-weight: 700; letter-spacing: .01em; }
+  .vault .vsub { font-family: "IBM Plex Mono", monospace; font-size: 10px; color: var(--fg-faint); margin-left: auto; }
+  .vault .swap { color: var(--fg-faint); font-size: 12px; }
+
+  .tree { font-size: 13px; flex: 1; min-height: 0; position: relative; }
+  .row {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    height: 34px;
+    padding: 0 8px;
+    border-radius: 8px;
+    color: var(--fg-dim);
+    cursor: pointer;
+  }
+  .row .chev { width: 15px; font-size: 10px; color: var(--fg-faint); flex-shrink: 0; text-align: center; transition: color .15s; }
+  .row .name { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .row .count { font-family: "IBM Plex Mono", monospace; font-size: 10.5px; color: var(--fg-faint); }
+  .row:hover { background: var(--hover-fill); color: var(--fg); }
+  .row.active {
+    background: var(--raise-fill);
+    color: var(--lamp);
+  }
+  .row.active::before {
+    content: ""; position: absolute; left: 0; top: 7px; bottom: 7px; width: 2px;
+    background: var(--lamp); border-radius: 2px; box-shadow: 0 0 8px var(--lamp);
+  }
+  .row.active .chev, .row.active .count { color: var(--lamp); opacity: .8; }
+  .indent-1 { padding-left: 26px; }
+  .tree .guide {
+    position: absolute; left: 15px; width: 1px; background: var(--hair-strong);
+  }
+  .row .ops {
+    position: absolute; right: 5px; top: 50%; transform: translateY(-50%);
+    display: none; align-items: center; gap: 1px;
+    padding: 2px; border-radius: 8px;
+    background: var(--night-raised);
+    box-shadow: 0 0 0 1px var(--hair-strong), 0 6px 14px -8px rgba(0,0,0,.7);
+  }
+  .row.show-ops .ops, .row:hover .ops { display: flex; }
+  .row .ops button {
+    width: 24px; height: 24px; border: 0; background: none; cursor: pointer;
+    color: var(--fg-faint); font-size: 13px; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .row .ops button:hover { color: var(--lamp); background: var(--hover-fill); }
+  .add-folder { margin-top: 6px; padding: 8px 10px; font-size: 12px; color: var(--fg-faint); border-radius: 8px; cursor: pointer; }
+  .add-folder:hover { color: var(--fg-dim); background: var(--hover-fill); }
+
+  /* ---- 中ペイン ---- */
+  .list {
+    border-right: 1px solid var(--hair);
+    background: var(--night-panel);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .search {
+    margin: 18px 16px 10px;
+    background: var(--night-deep);
+    border: 1px solid var(--hair-strong);
+    border-radius: 10px;
+    padding: 9px 13px;
+    font-size: 12.5px;
+    color: var(--fg-faint);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .search .mag { width: 13px; height: 13px; flex-shrink: 0; opacity: .6; }
+  .search .ph { flex: 1; }
+  .search kbd {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10px;
+    border: 1px solid var(--hair-strong);
+    border-radius: 5px;
+    padding: 1px 6px;
+    color: var(--fg-faint);
+  }
+  .breadcrumb {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10.5px;
+    letter-spacing: .04em;
+    color: var(--fg-faint);
+    padding: 4px 20px 10px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .breadcrumb b { color: var(--fg-dim); font-weight: 500; }
+  .breadcrumb .n { margin-left: auto; }
+
+  .cards { flex: 1; overflow: hidden; padding: 0 8px; }
+  .memo-card {
+    padding: 13px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    position: relative;
+  }
+  .memo-card + .memo-card::before {
+    content: ""; position: absolute; top: -1px; left: 12px; right: 12px; height: 1px; background: var(--hair);
+  }
+  .memo-card:hover:not(.active) { background: var(--hover-fill); }
+  .memo-card:hover::before, .memo-card:hover + .memo-card::before { opacity: 0; }
+  .memo-card h3 { font-size: 13.5px; font-weight: 700; margin-bottom: 5px; letter-spacing: .01em; }
+  .memo-card p {
+    font-size: 11.5px;
+    line-height: 1.7;
+    color: var(--fg-dim);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .memo-card time {
+    display: block;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10px;
+    color: var(--fg-faint);
+    margin-top: 8px;
+  }
+  .memo-card.active {
+    background: var(--raise-fill);
+    box-shadow: 0 0 0 1px var(--hair-strong) inset;
+  }
+  .memo-card.active::before, .memo-card.active + .memo-card::before { opacity: 0; }
+  .memo-card.active::after {
+    content: ""; position: absolute; left: 0; top: 12px; bottom: 12px; width: 2px;
+    background: var(--lamp); border-radius: 2px; box-shadow: 0 0 8px var(--lamp);
+  }
+  .memo-card.active h3 { color: var(--lamp); }
+
+  .new-memo {
+    margin: 10px 16px 16px;
+    padding: 10px;
+    text-align: center;
+    background: var(--night-raised);
+    border: 1px solid var(--hair-strong);
+    border-radius: 10px;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--fg-dim);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .new-memo:hover { color: var(--fg); border-color: rgba(224,164,88,.35); }
+  .new-memo kbd { font-family: "IBM Plex Mono", monospace; font-size: 10px; color: var(--fg-faint); border: 1px solid var(--hair-strong); border-radius: 5px; padding: 1px 6px; }
+
+  /* ---- エディタ ---- */
+  .editor {
+    min-width: 0;
+    display: flex; flex-direction: column;
+    background: radial-gradient(ellipse 80% 40% at 50% -12%, rgba(224,164,88,.05), transparent 60%);
+    position: relative;
+  }
+  .toolbar {
+    height: 52px; flex-shrink: 0;
+    display: flex; align-items: center; gap: 10px;
+    padding: 0 26px;
+    border-bottom: 1px solid var(--hair);
+  }
+  .crumb-chip {
+    display: flex; align-items: center; gap: 7px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px; color: var(--fg-dim);
+    padding: 5px 10px; border-radius: 8px; border: 1px solid transparent;
+    cursor: pointer;
+  }
+  .crumb-chip:hover { border-color: var(--hair-strong); background: var(--hover-fill); }
+  .crumb-chip .fdot { width: 6px; height: 6px; border-radius: 2px; background: var(--lamp); opacity: .8; }
+  .toolbar .spacer { flex: 1; }
+  .tool-btn {
+    width: 30px; height: 30px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--fg-faint); cursor: pointer; font-size: 15px;
+  }
+  .tool-btn:hover { background: var(--hover-fill); color: var(--fg-dim); }
+  .tool-btn.del:hover { color: var(--danger); }
+
+  .doc { padding: 40px 60px 48px; overflow: hidden; }
+  .editor h1 { font-size: 28px; font-weight: 700; line-height: 1.35; letter-spacing: .005em; margin-bottom: 12px; max-width: 20em; }
+  .editor .meta {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10.5px;
+    letter-spacing: .06em;
+    color: var(--fg-faint);
+    display: flex; gap: 10px; align-items: center;
+    padding-bottom: 22px;
+    margin-bottom: 26px;
+    border-bottom: 1px solid var(--hair);
+  }
+  .editor .meta .sep { opacity: .5; }
+  .editor .body { font-size: 14.5px; line-height: 2.05; max-width: 34em; color: var(--fg); }
+  .editor .body p + p { margin-top: 1.35em; }
+  .editor .body strong { color: var(--lamp); font-weight: 700; }
+  .editor .body code {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12.5px;
+    background: var(--night-raised);
+    border: 1px solid var(--hair-strong);
+    border-radius: 6px;
+    padding: 1px 7px;
+    color: var(--lamp-bright);
+  }
+  .figure {
+    margin: 22px 0 8px;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--hair-strong);
+    max-width: 62%;
+  }
+  .figure .ph {
+    height: 176px;
+    background:
+      repeating-linear-gradient(135deg, rgba(255,255,255,.02) 0 10px, transparent 10px 20px),
+      var(--night-raised);
+    display: flex; align-items: center; justify-content: center;
+    font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--fg-faint);
+    letter-spacing: .08em;
+  }
+  .add-image {
+    margin-top: 26px;
+    display: inline-flex; align-items: center; gap: 8px;
+    border: 1px solid var(--hair-strong);
+    border-radius: 9px;
+    padding: 8px 15px;
+    font-size: 12px;
+    color: var(--fg-dim);
+    cursor: pointer;
+  }
+  .add-image:hover { border-color: rgba(224,164,88,.35); color: var(--fg); }
+
+  /* ============ MOBILE ============ */
+  .mobile {
+    width: 320px;
+    height: 744px;
+    background:
+      radial-gradient(ellipse 100% 36% at 82% 0%, var(--lamp-glow), transparent 62%),
+      var(--night);
+    border-radius: 40px;
+    border: 10px solid #05070c;
+    box-shadow: 0 0 0 1px var(--hair), 0 30px 70px -18px rgba(0,0,0,.85);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+  .m-head {
+    padding: 20px 18px 14px;
+    display: flex; align-items: center; gap: 10px;
+    border-bottom: 1px solid var(--hair);
+  }
+  .m-head .wordmark { font-size: 18px; margin: 0; padding: 0; }
+  .m-vault {
+    margin-left: auto;
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 12px;
+    background: var(--night-raised);
+    border: 1px solid var(--hair-strong);
+    border-radius: 10px;
+    font-size: 12.5px; font-weight: 700;
+  }
+  .m-vault .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--lamp); box-shadow: 0 0 8px var(--lamp); }
+  .m-vault .swap { color: var(--fg-faint); font-size: 11px; }
+  .m-search {
+    margin: 14px 16px 8px;
+    background: var(--night-deep);
+    border: 1px solid var(--hair-strong);
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 13px; color: var(--fg-faint);
+    display: flex; align-items: center; gap: 9px;
+  }
+  .m-search .mag { width: 14px; height: 14px; opacity: .6; }
+  .m-tree { padding: 6px 10px; font-size: 14.5px; flex: 1; }
+  .m-row {
+    position: relative;
+    display: flex; align-items: center; gap: 6px;
+    height: 48px; padding: 0 8px;
+    border-radius: 10px;
+    color: var(--fg);
+  }
+  .m-row .chev { width: 22px; font-size: 13px; color: var(--fg-faint); text-align: center; }
+  .m-row .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .m-row .count { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--fg-faint); }
+  .m-row .kebab { width: 44px; height: 44px; margin-right: -8px; display: flex; align-items: center; justify-content: center; color: var(--fg-faint); font-size: 18px; }
+  .m-row.active { background: var(--raise-fill); }
+  .m-row.active::before { content: ""; position: absolute; left: 0; top: 9px; bottom: 9px; width: 2px; background: var(--lamp); border-radius: 2px; box-shadow: 0 0 8px var(--lamp); }
+  .m-row.active .name { color: var(--lamp); }
+  .m-indent { padding-left: 30px; }
+  .m-add { padding: 12px 12px; font-size: 13px; color: var(--fg-faint); }
+  .m-fab {
+    position: absolute; bottom: 22px; right: 18px;
+    width: 56px; height: 56px; border-radius: 50%;
+    background: linear-gradient(160deg, var(--lamp-bright), var(--lamp));
+    color: var(--night); font-size: 26px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 12px 30px -8px rgba(224,164,88,.6), 0 0 0 1px rgba(224,164,88,.3);
+  }
+</style>
+</head>
+<body>
+
+<!-- ===================== DESKTOP ===================== -->
+<div class="stack">
+  <div class="caption">改善版 — <b>デスクトップ3ペイン</b> ／ 夜テーマ維持・階層と余白・タイポ統一・状態表現を洗練</div>
+  <div class="desktop">
+    <!-- 左レール -->
+    <aside class="rail">
+      <div class="wordmark">memo<i>.</i></div>
+      <div class="vault">
+        <span class="dot"></span>
+        <span class="vname">日々の記録</span>
+        <span class="vsub">128</span>
+        <span class="swap">⇄</span>
+      </div>
+      <nav class="tree">
+        <div class="guide" style="top:34px;height:68px;"></div>
+        <div class="row"><span class="chev">▾</span><span class="name">技術メモ</span><span class="count">42</span></div>
+        <div class="row indent-1 active"><span class="chev">▸</span><span class="name">Cloudflare</span><span class="count">8</span></div>
+        <div class="row indent-1 show-ops"><span class="chev">▸</span><span class="name">Terraform</span><span class="count">11</span>
+          <span class="ops">
+            <button title="サブフォルダを追加">＋</button>
+            <button title="名前を変更">✎</button>
+            <button title="削除">×</button>
+          </span>
+        </div>
+        <div class="row"><span class="chev">▸</span><span class="name">料理</span><span class="count">17</span></div>
+        <div class="row"><span class="chev" style="visibility:hidden">▸</span><span class="name" style="color:var(--fg-faint)">(未分類)</span><span class="count">12</span></div>
+        <div class="add-folder">＋ 新しいフォルダ</div>
+      </nav>
+    </aside>
+
+    <!-- 中ペイン -->
+    <section class="list">
+      <div class="search">
+        <svg class="mag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4" stroke-linecap="round"/></svg>
+        <span class="ph">検索…</span>
+        <kbd>⌘K</kbd>
+      </div>
+      <div class="breadcrumb">技術メモ<span>/</span><b>Cloudflare</b><span class="n">8件</span></div>
+      <div class="cards">
+        <div class="memo-card active">
+          <h3>Workersの単一構成メモ</h3>
+          <p>静的アセットとAPIを1つのWorkerに同居させると、CORSも二重認証も消える。</p>
+          <time>2026-07-03 10:12</time>
+        </div>
+        <div class="memo-card">
+          <h3>D1のマイグレーション運用</h3>
+          <p>drizzle-kit generateで生成、wranglerでapply。ローカルと本番の2段階。</p>
+          <time>2026-06-30 15:20</time>
+        </div>
+        <div class="memo-card">
+          <h3>R2をTerraformバックエンドにする</h3>
+          <p>S3互換なのでbackend "s3"がそのまま使える。skip系フラグを忘れずに。</p>
+          <time>2026-06-29 11:08</time>
+        </div>
+        <div class="memo-card">
+          <h3>Durable Objectsの排他制御メモ</h3>
+          <p>1オブジェクト＝1シングルスレッド。ロックを自前で持たなくていい設計に寄せる。</p>
+          <time>2026-06-25 21:44</time>
+        </div>
+      </div>
+      <div class="new-memo">＋ 新しいメモ <kbd>⌘N</kbd></div>
+    </section>
+
+    <!-- エディタ -->
+    <main class="editor">
+      <div class="toolbar">
+        <div class="crumb-chip"><span class="fdot"></span>技術メモ / Cloudflare</div>
+        <div class="spacer"></div>
+        <div class="tool-btn" title="お気に入り"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 17l-5.2 2.6 1-5.8-4.3-4.1 5.9-.9z" stroke-linejoin="round"/></svg></div>
+        <div class="tool-btn del" title="削除"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      </div>
+      <div class="doc">
+        <h1>Workersの単一構成メモ</h1>
+        <div class="meta"><span>2026-07-03 10:12</span><span class="sep">·</span><span>本文 214字</span></div>
+        <div class="body">
+          <p>静的アセットとAPIを1つのWorkerに同居させると、<strong>CORSも二重認証も消える</strong>。オリジンが1つなら、認証Cookieは何も考えなくても全リクエストに付いてくる。</p>
+          <div class="figure"><div class="ph">構成図 — R2添付画像</div></div>
+          <p>設定は<code>wrangler.jsonc</code>に<code>run_worker_first</code>を足すだけ。分離は必要になってからで遅くない。</p>
+        </div>
+        <div class="add-image">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="1.6"/><path d="M21 15l-5-5L5 21" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          画像を追加
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ===================== MOBILE ===================== -->
+<div class="stack">
+  <div class="caption">改善版 — <b>モバイル</b></div>
+  <div class="mobile">
+    <div class="m-head">
+      <span class="wordmark">memo<i>.</i></span>
+      <span class="m-vault"><span class="dot"></span>日々の記録<span class="swap">⇄</span></span>
+    </div>
+    <div class="m-search">
+      <svg class="mag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4" stroke-linecap="round"/></svg>
+      検索…
+    </div>
+    <nav class="m-tree">
+      <div class="m-row"><span class="chev">▾</span><span class="name">技術メモ</span><span class="count">42</span><span class="kebab">⋯</span></div>
+      <div class="m-row m-indent active"><span class="chev">▸</span><span class="name">Cloudflare</span><span class="count">8</span><span class="kebab">⋯</span></div>
+      <div class="m-row m-indent"><span class="chev">▸</span><span class="name">Terraform</span><span class="count">11</span><span class="kebab">⋯</span></div>
+      <div class="m-row"><span class="chev">▸</span><span class="name">料理</span><span class="count">17</span><span class="kebab">⋯</span></div>
+      <div class="m-row"><span class="chev" style="visibility:hidden">▸</span><span class="name" style="color:var(--fg-faint)">(未分類)</span><span class="count">12</span></div>
+      <div class="m-add">＋ 新しいフォルダ</div>
+    </nav>
+    <div class="m-fab">＋</div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -24,7 +24,7 @@ export function FolderParentPicker({
       onChange={(event) =>
         onChange(event.target.value === "root" ? null : event.target.value)
       }
-      className="mt-1 min-h-11 w-full rounded-md border border-line bg-night px-3 py-2 text-[15px] text-fg-dim focus:border-lamp/50 focus:outline-none md:min-h-0 md:px-2 md:py-1 md:text-xs"
+      className="mt-1 min-h-11 w-full rounded-md border border-hair-strong bg-night px-3 py-2 text-[15px] text-fg-dim focus:border-lamp/50 focus:outline-none md:min-h-0 md:px-2 md:py-1 md:text-xs"
     >
       <option value="root">Vault直下</option>
       {folders.map((folder) => (

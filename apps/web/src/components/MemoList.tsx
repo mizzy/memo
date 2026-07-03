@@ -35,10 +35,10 @@ export function MemoList({ memos, selectedId, onSelect }: Props) {
           <button
             key={memo.id}
             onClick={() => onSelect(memo)}
-            className={`mb-0.5 rounded-lg px-3.5 py-3 text-left transition-colors ${
+            className={`memo-list-card rounded-[10px] px-3.5 py-3 text-left transition-colors ${
               active
-                ? "bg-[linear-gradient(140deg,rgba(224,164,88,0.12),rgba(224,164,88,0.03)_55%)] bg-night-raised shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
-                : "hover:bg-night-raised/50"
+                ? "memo-list-card-active bg-raise-fill shadow-[0_0_0_1px_var(--color-hair-strong)_inset]"
+                : "hover:bg-hover-fill"
             }`}
           >
             <div

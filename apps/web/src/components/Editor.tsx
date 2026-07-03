@@ -124,8 +124,24 @@ export function Editor({ memoId, content, onChange, onUploadError }: Props) {
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={uploading}
-          className="rounded-md border border-line px-3 py-1.5 text-xs text-fg-dim transition-colors hover:border-lamp/50 hover:text-fg disabled:cursor-not-allowed disabled:opacity-45"
+          className="inline-flex items-center gap-2 rounded-[9px] border border-hair-strong px-3.5 py-2 text-xs text-fg-dim transition-colors hover:border-lamp/50 hover:text-fg disabled:cursor-not-allowed disabled:opacity-45"
         >
+          <svg
+            aria-hidden="true"
+            className="h-3.5 w-3.5"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <rect x="3" y="3" width="18" height="18" rx="3" />
+            <circle cx="9" cy="9" r="1.6" />
+            <path
+              d="M21 15l-5-5L5 21"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
           画像を追加
         </button>
       </div>

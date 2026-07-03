@@ -23,6 +23,12 @@ function formatMeta(iso: string) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+function plainTextFromHtml(html: string): string {
+  return (
+    new DOMParser().parseFromString(html, "text/html").body.textContent ?? ""
+  );
+}
+
 function parseSavedExpanded(value: string | null) {
   if (!value) return [];
   try {
@@ -76,6 +82,10 @@ export function App() {
     [folders, selectedFolderId]
   );
   const selectedFolderName = selectedFolderPath.at(-1)?.name ?? "(未分類)";
+  const editorTextCount = useMemo(
+    () => Array.from(plainTextFromHtml(content)).length,
+    [content]
+  );
   const rootMemoCount = Math.max(
     (selectedVault?.memoCount ?? 0) -
       folders.reduce((sum, folder) => sum + folder.memoCount, 0),
@@ -448,17 +458,28 @@ export function App() {
   };
 
   const renderSearchBox = () => (
-    <div className="p-3.5 pb-2">
-      <div className="flex items-center justify-between rounded-[9px] border border-line bg-night px-3.5 py-2">
+    <div className="px-4 pb-2 pt-3.5 md:pb-2.5 md:pt-[18px]">
+      <div className="flex items-center gap-2 rounded-[11px] border border-hair-strong bg-night-deep px-3.5 py-2.5 text-fg-faint md:rounded-[10px] md:py-2">
+        <svg
+          aria-hidden="true"
+          className="h-3.5 w-3.5 shrink-0 opacity-60 md:h-[13px] md:w-[13px]"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
+          <circle cx="11" cy="11" r="7" />
+          <path d="M21 21l-4-4" strokeLinecap="round" />
+        </svg>
         <input
           ref={searchRef}
           type="text"
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder="検索…"
-          className="w-full bg-transparent text-[12.5px] text-fg placeholder-fg-faint focus:outline-none"
+          className="w-full bg-transparent text-[13px] text-fg placeholder-fg-faint focus:outline-none md:text-[12.5px]"
         />
-        <kbd className="hidden rounded border border-line px-1.5 py-px font-mono text-[10px] text-fg-faint md:block">
+        <kbd className="hidden rounded border border-hair-strong px-1.5 py-px font-mono text-[10px] text-fg-faint md:block">
           ⌘K
         </kbd>
       </div>
@@ -485,7 +506,7 @@ export function App() {
               value={newVaultName}
               onChange={(event) => setNewVaultName(event.target.value)}
               autoFocus
-              className="min-w-0 flex-1 rounded-lg border border-line bg-night-raised px-3 py-2 text-sm text-fg placeholder-fg-faint focus:border-lamp/60 focus:outline-none"
+              className="min-w-0 flex-1 rounded-lg border border-hair-strong bg-night-raised px-3 py-2 text-sm text-fg placeholder-fg-faint focus:border-lamp/60 focus:outline-none"
             />
             <button
               type="submit"
@@ -523,15 +544,15 @@ export function App() {
       />
 
       <section
-        className={`w-full flex-col border-r border-line bg-night-deep/55 md:hidden ${
+        className={`w-full flex-col border-r border-hair bg-night md:hidden ${
           mobileView === "tree" ? "flex" : "hidden"
         }`}
       >
-        <div className="flex items-center gap-3 border-b border-line px-5 pb-3 pt-5">
+        <div className="flex items-center gap-3 border-b border-hair px-[18px] pb-3.5 pt-5">
           <div className="font-display text-lg font-semibold">
             memo<span className="text-lamp">.</span>
           </div>
-          <div className="ml-auto w-40">
+          <div className="ml-auto w-40 [&>div]:mb-0">
             <VaultSwitcher
               vaults={vaults}
               selectedVault={selectedVault}
@@ -560,11 +581,11 @@ export function App() {
       </section>
 
       <section
-        className={`w-full flex-col border-r border-line bg-night-panel md:flex md:w-72 md:shrink-0 ${
+        className={`w-full flex-col border-r border-hair bg-night-panel md:flex md:w-72 md:shrink-0 ${
           mobileView === "list" ? "flex" : "hidden"
         }`}
       >
-        <div className="flex items-center gap-3 border-b border-line px-5 pb-3 pt-5 md:hidden">
+        <div className="flex items-center gap-3 border-b border-hair px-5 pb-3 pt-5 md:hidden">
           <button
             type="button"
             onClick={() => setMobileView("tree")}
@@ -584,6 +605,7 @@ export function App() {
         <MemoBreadcrumb
           path={selectedFolderPath}
           vaultName={selectedVault?.name ?? ""}
+          count={memos.length}
         />
 
         <div className="min-h-0 flex-1 overflow-y-auto">
@@ -597,12 +619,12 @@ export function App() {
         </div>
 
         {selectedVault && (
-          <div className="hidden border-t border-line p-3 md:block">
+          <div className="hidden border-t border-hair p-3 md:block">
             <button
               type="button"
               onClick={handleCreateMemo}
               aria-label="＋ 新しいメモ ⌘N"
-              className="w-full rounded-lg bg-night-raised px-3 py-2 text-sm text-fg-dim transition-colors hover:text-fg"
+              className="flex w-full items-center justify-center gap-2 rounded-[10px] border border-hair-strong bg-night-raised px-3 py-2 text-sm text-fg-dim transition-colors hover:border-lamp/50 hover:text-fg"
             >
               ＋ 新しいメモ
               <span className="ml-2 font-mono text-[10px] text-fg-faint">
@@ -625,60 +647,88 @@ export function App() {
       </section>
 
       <main
-        className={`relative min-w-0 flex-1 flex-col md:flex ${
+        className={`relative min-w-0 flex-1 flex-col bg-[radial-gradient(ellipse_80%_40%_at_50%_-12%,rgba(224,164,88,0.05),transparent_60%)] md:flex ${
           mobileView === "editor" ? "flex" : "hidden"
         }`}
       >
         {selectedMemo ? (
-          <div className="flex-1 overflow-y-auto px-6 py-8 md:px-14 md:py-12">
-            <button
-              type="button"
-              onClick={() => {
-                flushPendingSave();
-                setMobileView("list");
-              }}
-              className="mb-4 text-sm text-fg-dim md:hidden"
-            >
-              ‹ {selectedFolderName}
-            </button>
+          <>
+            <div className="flex h-[52px] shrink-0 items-center gap-2 border-b border-hair px-4 md:px-6">
+              <MemoFolderPicker
+                folders={folders}
+                value={selectedMemo.folderId}
+                onChange={handleMoveMemo}
+                variant="chip"
+              />
+              <div className="flex-1" />
+              {confirmingDelete ? (
+                <button
+                  type="button"
+                  onClick={handleDeleteMemo}
+                  className="h-[30px] rounded-lg bg-danger/15 px-3 font-mono text-[11px] text-danger transition-colors hover:bg-danger/20"
+                >
+                  本当に削除する
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  aria-label="削除"
+                  title="削除"
+                  onClick={handleDeleteMemo}
+                  className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-lg text-fg-faint transition-colors hover:bg-hover-fill hover:text-danger"
+                >
+                  <svg
+                    aria-hidden="true"
+                    className="h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.7"
+                  >
+                    <path
+                      d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </button>
+              )}
+            </div>
 
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex-1 overflow-y-auto px-6 py-8 md:px-[60px] md:py-10">
+              <button
+                type="button"
+                onClick={() => {
+                  flushPendingSave();
+                  setMobileView("list");
+                }}
+                className="mb-4 text-sm text-fg-dim md:hidden"
+              >
+                ‹ {selectedFolderName}
+              </button>
+
               <input
                 type="text"
                 value={title}
                 onChange={(event) => handleTitleChange(event.target.value)}
                 placeholder="タイトル"
-                className="w-full bg-transparent text-2xl font-bold text-fg placeholder-fg-faint focus:outline-none md:text-[27px]"
+                className="w-full max-w-[20em] bg-transparent text-2xl font-bold leading-[1.35] tracking-[0.005em] text-fg placeholder-fg-faint focus:outline-none md:text-[28px]"
               />
-              <button
-                type="button"
-                onClick={handleDeleteMemo}
-                className={`shrink-0 rounded-md px-2.5 py-1 text-xs transition-colors ${
-                  confirmingDelete
-                    ? "bg-danger/15 text-danger"
-                    : "text-fg-faint hover:text-danger"
-                }`}
-              >
-                {confirmingDelete ? "本当に削除する" : "削除"}
-              </button>
-            </div>
 
-            <div className="mb-8 mt-2 flex flex-wrap items-center gap-2 font-mono text-[10.5px] tracking-wider text-fg-faint">
-              <MemoFolderPicker
-                folders={folders}
-                value={selectedMemo.folderId}
-                onChange={handleMoveMemo}
+              <div className="mb-7 mt-3 flex flex-wrap items-center gap-2 border-b border-hair pb-5 font-mono text-[10.5px] tracking-[0.06em] text-fg-faint">
+                <span>{formatMeta(selectedMemo.updatedAt)}</span>
+                <span className="opacity-50">·</span>
+                <span>本文{editorTextCount}字</span>
+              </div>
+
+              <Editor
+                memoId={selectedMemo.id}
+                content={content}
+                onChange={handleContentChange}
+                onUploadError={() => setSaveState("upload-error")}
               />
-              <span>{formatMeta(selectedMemo.updatedAt)}</span>
             </div>
-
-            <Editor
-              memoId={selectedMemo.id}
-              content={content}
-              onChange={handleContentChange}
-              onUploadError={() => setSaveState("upload-error")}
-            />
-          </div>
+          </>
         ) : (
           <div className="hidden flex-1 items-center justify-center text-sm text-fg-faint md:flex">
             {selectedVault

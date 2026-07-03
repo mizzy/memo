@@ -22,7 +22,7 @@ export function VaultRail({ vaults, selectedId, onSelect, onCreate }: Props) {
   };
 
   return (
-    <aside className="hidden md:flex w-52 shrink-0 flex-col border-r border-line bg-night-deep/55 px-4 py-6">
+    <aside className="hidden w-52 shrink-0 flex-col border-r border-hair bg-night-deep/55 px-4 py-6 md:flex">
       <div className="px-2 mb-9 font-display text-xl font-semibold tracking-wide">
         memo<span className="text-lamp">.</span>
       </div>
@@ -69,7 +69,7 @@ export function VaultRail({ vaults, selectedId, onSelect, onCreate }: Props) {
               onBlur={() => {
                 if (!name.trim()) setIsCreating(false);
               }}
-              className="w-full rounded-md border border-line bg-night px-2 py-1.5 text-sm text-fg placeholder-fg-faint focus:border-lamp/50 focus:outline-none"
+              className="w-full rounded-md border border-hair-strong bg-night px-2 py-1.5 text-sm text-fg placeholder-fg-faint focus:border-lamp/50 focus:outline-none"
             />
           </form>
         ) : (

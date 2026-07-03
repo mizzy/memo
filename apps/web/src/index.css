@@ -48,10 +48,19 @@
   --color-lamp: #e0a458;
   --color-lamp-bright: #edb56b;
   --color-danger: #e2795e;
+  --color-hair: rgba(255, 255, 255, 0.055);
+  --color-hair-strong: rgba(255, 255, 255, 0.09);
+  --color-raise-fill: rgba(224, 164, 88, 0.07);
+  --color-hover-fill: rgba(255, 255, 255, 0.035);
 
   --font-display: "Fraunces", "Shippori Mincho", serif;
   --font-body: "Zen Kaku Gothic New Latin", "Zen Kaku Gothic New", sans-serif;
   --font-mono: "IBM Plex Mono", monospace;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 html,
@@ -75,6 +84,39 @@ body {
       transparent 60%
     ),
     var(--color-night);
+}
+
+.memo-list-card {
+  position: relative;
+}
+
+.memo-list-card + .memo-list-card::after {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 12px;
+  right: 12px;
+  height: 1px;
+  background: var(--color-hair);
+}
+
+.memo-list-card:hover::after,
+.memo-list-card:hover + .memo-list-card::after,
+.memo-list-card-active::after,
+.memo-list-card-active + .memo-list-card::after {
+  opacity: 0;
+}
+
+.memo-list-card-active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 12px;
+  bottom: 12px;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--color-lamp);
+  box-shadow: 0 0 8px var(--color-lamp);
 }
 
 /* Tiptapエディタ本文 */
@@ -110,7 +152,7 @@ body {
   font-family: var(--font-mono);
   font-size: 0.85em;
   background: var(--color-night-raised);
-  border: 1px solid var(--color-line);
+  border: 1px solid var(--color-hair-strong);
   border-radius: 5px;
   padding: 1px 6px;
   color: var(--color-lamp);
@@ -120,7 +162,7 @@ body {
   font-family: var(--font-mono);
   font-size: 0.85em;
   background: var(--color-night-deep);
-  border: 1px solid var(--color-line);
+  border: 1px solid var(--color-hair);
   border-radius: 10px;
   padding: 14px 18px;
   margin: 1.2em 0;
@@ -155,6 +197,7 @@ body {
   display: block;
   max-width: 100%;
   height: auto;
+  border: 1px solid var(--color-hair-strong);
   border-radius: 8px;
   margin: 1.2em 0;
 }
