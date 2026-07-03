@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { folder, memo, vault } from "./test/factories.js";
@@ -62,8 +62,19 @@ describe("App folders", () => {
       memo({ id: "m1", vaultId: "v1", folderId: "f1" })
     );
 
-    render(<App />);
-    await user.click(await screen.findByRole("button", { name: "技術メモ" }));
+    const { container } = render(<App />);
+    const mobileTree = container.querySelector("section[class*='md:hidden']");
+    expect(mobileTree).not.toBeNull();
+
+    const mobileTreeScreen = within(mobileTree as HTMLElement);
+    await mobileTreeScreen.findByRole("button", { name: /^技術メモ(?: 0)?$/ });
+    expect(
+      mobileTreeScreen.getByRole("button", { name: "＋ 新しいフォルダ" })
+    ).toBeInTheDocument();
+
+    await user.click(
+      mobileTreeScreen.getByRole("button", { name: /^技術メモ(?: 0)?$/ })
+    );
     await user.click(screen.getByRole("button", { name: "新しいメモ" }));
 
     expect(mockApi.memos.create).toHaveBeenCalledWith({
