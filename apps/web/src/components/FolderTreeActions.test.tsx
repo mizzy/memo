@@ -6,6 +6,34 @@ import { FolderParentPicker } from "./FolderParentPicker.js";
 import { FolderTree } from "./FolderTree.js";
 
 describe("FolderTree actions", () => {
+  test("creates a root folder from the persistent add button in an empty tree", async () => {
+    const user = userEvent.setup();
+    const onCreateChild = vi.fn();
+    render(
+      <FolderTree
+        nodes={[]}
+        selectedFolderId="root"
+        expandedFolderIds={new Set()}
+        rootMemoCount={0}
+        onSelect={vi.fn()}
+        onToggle={vi.fn()}
+        onCreateChild={onCreateChild}
+      />
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: "＋ 新しいフォルダ" })
+    );
+    expect(screen.getByRole("button", { name: "作成" })).toBeDisabled();
+    await user.type(
+      screen.getByRole("textbox", { name: "新しいフォルダ名" }),
+      "Projects"
+    );
+    await user.click(screen.getByRole("button", { name: "作成" }));
+
+    expect(onCreateChild).toHaveBeenCalledWith(null, "Projects");
+  });
+
   test("creates a child folder from a row action", async () => {
     const user = userEvent.setup();
     const onCreateChild = vi.fn();

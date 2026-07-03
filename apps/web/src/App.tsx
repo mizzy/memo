@@ -298,10 +298,12 @@ export function App() {
     return loadFolders(selectedVaultId);
   };
 
-  const handleCreateFolder = async (parentId: string, name: string) => {
+  const handleCreateFolder = async (parentId: string | null, name: string) => {
     if (!selectedVault) return;
     await api.folders.create({ vaultId: selectedVault.id, parentId, name });
-    setExpandedFolderIds((current) => new Set(current).add(parentId));
+    if (parentId) {
+      setExpandedFolderIds((current) => new Set(current).add(parentId));
+    }
     await refreshFoldersForSelectedVault();
   };
 
