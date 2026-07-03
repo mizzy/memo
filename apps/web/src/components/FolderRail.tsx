@@ -24,7 +24,7 @@ type Props = {
 
 export function FolderRail(props: Props) {
   return (
-    <aside className="hidden w-64 shrink-0 flex-col border-r border-line bg-night-deep/55 px-4 py-6 md:flex">
+    <aside className="hidden w-64 shrink-0 flex-col border-r border-hair bg-night-deep/55 px-4 py-6 md:flex">
       <div className="mb-5 px-1 font-display text-xl font-semibold tracking-wide">
         memo<span className="text-lamp">.</span>
       </div>

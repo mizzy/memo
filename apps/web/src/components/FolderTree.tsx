@@ -119,9 +119,8 @@ export function FolderTree({
     const mobileActionsOpen = openMobileActionsFolderId === node.id;
     const actionVisibility =
       "pointer-events-none opacity-0 group-focus-within:pointer-events-auto group-focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100";
-    const mobileActionsBackground = active
-      ? "bg-night-raised/95 before:from-night-raised/95"
-      : "bg-night-deep/95 before:from-night-deep/95";
+    const activeRowClasses =
+      "bg-raise-fill text-lamp before:absolute before:left-0 before:top-2 before:bottom-2 before:w-0.5 before:rounded before:bg-lamp before:shadow-[0_0_8px_var(--color-lamp)] before:content-['']";
     const openChildCreate = () => {
       openCreate(node.id);
       setOpenMobileActionsFolderId(null);
@@ -148,26 +147,35 @@ export function FolderTree({
     };
 
     return (
-      <div key={node.id}>
+      <div key={node.id} className="relative">
+        {expanded && hasChildren && (
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute bottom-0 hidden w-px bg-hair-strong md:block"
+            style={{ left: node.depth * 18 + 15, top: 34 }}
+          />
+        )}
         <div
           className={`group relative rounded-lg transition-colors ${
             active
-              ? "bg-[linear-gradient(140deg,rgba(224,164,88,0.12),rgba(224,164,88,0.03)_55%)] bg-night-raised text-lamp shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
-              : "text-fg-dim hover:bg-night-raised/45 hover:text-fg"
+              ? activeRowClasses
+              : "text-fg-dim hover:bg-hover-fill hover:text-fg"
           }`}
           style={{ marginLeft: node.depth * 18 }}
         >
-          <div className="flex min-h-11 items-center gap-2 pl-2 pr-2 py-2 text-[15px] md:min-h-0 md:gap-1 md:py-1.5 md:text-[13px]">
+          <div className="flex h-12 items-center gap-1.5 px-2 text-[14.5px] md:h-[34px] md:gap-1 md:text-[13px]">
             <button
               type="button"
               aria-label={`${node.name}を開閉`}
               onClick={() => onToggle(node.id)}
-              className="flex h-8 w-8 shrink-0 items-center justify-center font-mono md:h-4 md:w-4"
+              className="flex h-12 w-8 shrink-0 items-center justify-center font-mono md:h-[34px] md:w-[15px]"
             >
               <span
                 className={
                   hasChildren
-                    ? "text-[15px] leading-none text-fg-dim md:text-[11px]"
+                    ? `text-[15px] leading-none md:text-[11px] ${
+                        active ? "text-lamp/80" : "text-fg-dim"
+                      }`
                     : "text-sm leading-none text-fg-faint md:text-[10px]"
                 }
               >
@@ -186,25 +194,16 @@ export function FolderTree({
               {node.totalMemoCount}
             </span>
             {hasActions && (
-              <>
-                {mobileActionsOpen ? (
-                  <span
-                    aria-hidden="true"
-                    className="ml-1 h-10 w-10 shrink-0 md:hidden"
-                  />
-                ) : (
-                  <button
-                    type="button"
-                    aria-label="フォルダ操作"
-                    aria-expanded={false}
-                    data-folder-actions-root
-                    onClick={toggleMobileActions}
-                    className="ml-1 flex h-10 w-10 shrink-0 items-center justify-center rounded font-mono text-xl text-fg-faint transition-colors hover:bg-night-raised/70 hover:text-fg md:hidden"
-                  >
-                    ⋯
-                  </button>
-                )}
-              </>
+              <button
+                type="button"
+                aria-label="フォルダ操作"
+                aria-expanded={mobileActionsOpen}
+                data-folder-actions-root
+                onClick={toggleMobileActions}
+                className="ml-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg font-mono text-xl text-fg-faint transition-colors hover:bg-hover-fill hover:text-fg md:hidden"
+              >
+                ⋯
+              </button>
             )}
           </div>
           {hasActions && mobileActionsOpen && (
@@ -212,7 +211,7 @@ export function FolderTree({
               role="group"
               aria-label={`${node.name}の操作`}
               data-folder-actions-root
-              className={`absolute right-1.5 top-1/2 z-20 flex -translate-y-1/2 items-center gap-0.5 rounded-md border border-line/70 px-0.5 py-0.5 text-fg-faint shadow-[0_6px_18px_-10px_rgba(0,0,0,0.9)] md:hidden before:pointer-events-none before:absolute before:inset-y-0 before:right-full before:w-8 before:bg-gradient-to-l before:to-transparent ${mobileActionsBackground}`}
+              className="absolute right-12 top-1/2 z-20 flex -translate-y-1/2 items-center gap-0.5 rounded-lg border border-hair-strong bg-night-raised px-0.5 py-0.5 text-fg-faint shadow-[0_6px_14px_-8px_rgba(0,0,0,0.7)] md:hidden"
             >
               {onCreateChild && (
                 <button
@@ -220,7 +219,7 @@ export function FolderTree({
                   aria-label="子フォルダを作成"
                   title="子フォルダを作成"
                   onClick={openChildCreate}
-                  className="flex h-10 w-10 items-center justify-center rounded font-mono text-lg transition-colors hover:bg-night/70 hover:text-lamp"
+                  className="flex h-10 w-10 items-center justify-center rounded-md font-mono text-lg transition-colors hover:bg-hover-fill hover:text-lamp"
                 >
                   ＋
                 </button>
@@ -231,7 +230,7 @@ export function FolderTree({
                   aria-label="リネーム"
                   title="リネーム"
                   onClick={openRename}
-                  className="flex h-10 w-10 items-center justify-center rounded text-lg transition-colors hover:bg-night/70 hover:text-lamp"
+                  className="flex h-10 w-10 items-center justify-center rounded-md text-lg transition-colors hover:bg-hover-fill hover:text-lamp"
                 >
                   ✎
                 </button>
@@ -242,7 +241,7 @@ export function FolderTree({
                   aria-label="移動"
                   title="移動"
                   onClick={toggleMove}
-                  className="flex h-10 w-10 items-center justify-center rounded font-mono text-lg transition-colors hover:bg-night/70 hover:text-lamp"
+                  className="flex h-10 w-10 items-center justify-center rounded-md font-mono text-lg transition-colors hover:bg-hover-fill hover:text-lamp"
                 >
                   →
                 </button>
@@ -253,26 +252,16 @@ export function FolderTree({
                   aria-label="削除"
                   title="削除"
                   onClick={deleteFolder}
-                  className="flex h-10 w-10 items-center justify-center rounded font-mono text-lg transition-colors hover:bg-danger/10 hover:text-danger"
+                  className="flex h-10 w-10 items-center justify-center rounded-md font-mono text-lg transition-colors hover:bg-danger/10 hover:text-danger"
                 >
                   ×
                 </button>
               )}
-              <button
-                type="button"
-                aria-label="フォルダ操作"
-                aria-expanded={true}
-                title="フォルダ操作"
-                onClick={toggleMobileActions}
-                className="flex h-10 w-10 items-center justify-center rounded font-mono text-xl transition-colors hover:bg-night/70 hover:text-fg"
-              >
-                ⋯
-              </button>
             </div>
           )}
           {hasActions && (
             <div
-              className={`absolute right-1 top-1/2 z-10 hidden -translate-y-1/2 items-center gap-0.5 rounded-md border border-line/70 bg-night-raised/95 px-1 py-0.5 text-fg-faint shadow-[0_6px_18px_-10px_rgba(0,0,0,0.9)] transition-opacity md:flex ${actionVisibility}`}
+              className={`absolute right-1.5 top-1/2 z-10 hidden -translate-y-1/2 items-center gap-px rounded-lg border border-hair-strong bg-night-raised px-0.5 py-0.5 text-fg-faint shadow-[0_6px_14px_-8px_rgba(0,0,0,0.7)] transition-opacity md:flex ${actionVisibility}`}
             >
               {onCreateChild && (
                 <button
@@ -280,7 +269,7 @@ export function FolderTree({
                   aria-label="子フォルダを作成"
                   title="子フォルダを作成"
                   onClick={openChildCreate}
-                  className="flex h-5 w-5 items-center justify-center rounded font-mono text-[12px] hover:text-lamp"
+                  className="flex h-6 w-6 items-center justify-center rounded-md font-mono text-[13px] transition-colors hover:bg-hover-fill hover:text-lamp"
                 >
                   ＋
                 </button>
@@ -291,7 +280,7 @@ export function FolderTree({
                   aria-label="リネーム"
                   title="リネーム"
                   onClick={openRename}
-                  className="flex h-5 w-5 items-center justify-center rounded text-[12px] hover:text-lamp"
+                  className="flex h-6 w-6 items-center justify-center rounded-md text-[13px] transition-colors hover:bg-hover-fill hover:text-lamp"
                 >
                   ✎
                 </button>
@@ -302,7 +291,7 @@ export function FolderTree({
                   aria-label="移動"
                   title="移動"
                   onClick={toggleMove}
-                  className="flex h-5 w-5 items-center justify-center rounded font-mono text-[12px] hover:text-lamp"
+                  className="flex h-6 w-6 items-center justify-center rounded-md font-mono text-[13px] transition-colors hover:bg-hover-fill hover:text-lamp"
                 >
                   →
                 </button>
@@ -313,7 +302,7 @@ export function FolderTree({
                   aria-label="削除"
                   title="削除"
                   onClick={deleteFolder}
-                  className="flex h-5 w-5 items-center justify-center rounded font-mono text-[12px] hover:text-danger"
+                  className="flex h-6 w-6 items-center justify-center rounded-md font-mono text-[13px] transition-colors hover:bg-danger/10 hover:text-danger"
                 >
                   ×
                 </button>
@@ -334,12 +323,12 @@ export function FolderTree({
                 value={creatingName}
                 onChange={(event) => setCreatingName(event.target.value)}
                 autoFocus
-                className="min-h-11 min-w-0 flex-1 rounded-md border border-line bg-night px-3 py-2 text-[15px] text-fg placeholder-fg-faint focus:border-lamp/50 focus:outline-none md:min-h-0 md:px-2 md:py-1 md:text-xs"
+                className="min-h-11 min-w-0 flex-1 rounded-md border border-hair-strong bg-night px-3 py-2 text-[15px] text-fg placeholder-fg-faint focus:border-lamp/50 focus:outline-none md:min-h-0 md:px-2 md:py-1 md:text-xs"
               />
               <button
                 type="submit"
                 disabled={creatingName.trim().length === 0}
-                className="min-h-11 shrink-0 rounded-md border border-lamp/40 bg-lamp px-3 py-2 text-sm font-bold text-night transition-opacity disabled:cursor-not-allowed disabled:border-line disabled:bg-night-raised disabled:text-fg-faint disabled:opacity-60 md:min-h-0 md:px-2 md:py-1 md:text-[11px]"
+                className="min-h-11 shrink-0 rounded-md border border-lamp/40 bg-lamp px-3 py-2 text-sm font-bold text-night transition-opacity disabled:cursor-not-allowed disabled:border-hair-strong disabled:bg-night-raised disabled:text-fg-faint disabled:opacity-60 md:min-h-0 md:px-2 md:py-1 md:text-[11px]"
               >
                 作成
               </button>
@@ -359,12 +348,12 @@ export function FolderTree({
                 value={renamingName}
                 onChange={(event) => setRenamingName(event.target.value)}
                 autoFocus
-                className="min-h-11 min-w-0 flex-1 rounded-md border border-line bg-night px-3 py-2 text-[15px] text-fg placeholder-fg-faint focus:border-lamp/50 focus:outline-none md:min-h-0 md:px-2 md:py-1 md:text-xs"
+                className="min-h-11 min-w-0 flex-1 rounded-md border border-hair-strong bg-night px-3 py-2 text-[15px] text-fg placeholder-fg-faint focus:border-lamp/50 focus:outline-none md:min-h-0 md:px-2 md:py-1 md:text-xs"
               />
               <button
                 type="submit"
                 disabled={renamingName.trim().length === 0}
-                className="min-h-11 shrink-0 rounded-md border border-lamp/40 bg-lamp px-3 py-2 text-sm font-bold text-night transition-opacity disabled:cursor-not-allowed disabled:border-line disabled:bg-night-raised disabled:text-fg-faint disabled:opacity-60 md:min-h-0 md:px-2 md:py-1 md:text-[11px]"
+                className="min-h-11 shrink-0 rounded-md border border-lamp/40 bg-lamp px-3 py-2 text-sm font-bold text-night transition-opacity disabled:cursor-not-allowed disabled:border-hair-strong disabled:bg-night-raised disabled:text-fg-faint disabled:opacity-60 md:min-h-0 md:px-2 md:py-1 md:text-[11px]"
               >
                 変更
               </button>
@@ -396,12 +385,18 @@ export function FolderTree({
         type="button"
         aria-label={countLabel("(未分類)", rootMemoCount)}
         onClick={() => onSelect("root")}
-        className={`mt-1 flex min-h-11 w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[15px] transition-colors md:min-h-0 md:py-1.5 md:text-[13px] ${
+        className={`relative mt-1 flex h-12 w-full items-center gap-1.5 rounded-lg px-2 text-left text-[14.5px] transition-colors md:h-[34px] md:gap-1 md:text-[13px] ${
           selectedFolderId === "root"
-            ? "bg-[linear-gradient(140deg,rgba(224,164,88,0.12),rgba(224,164,88,0.03)_55%)] bg-night-raised text-lamp"
-            : "text-fg-faint hover:bg-night-raised/45 hover:text-fg-dim"
+            ? "bg-raise-fill text-lamp before:absolute before:left-0 before:top-2 before:bottom-2 before:w-0.5 before:rounded before:bg-lamp before:shadow-[0_0_8px_var(--color-lamp)] before:content-['']"
+            : "text-fg-faint hover:bg-hover-fill hover:text-fg-dim"
         }`}
       >
+        <span
+          aria-hidden="true"
+          className="invisible flex h-12 w-8 shrink-0 items-center justify-center font-mono md:h-[34px] md:w-[15px]"
+        >
+          ▸
+        </span>
         <span className="min-w-0 flex-1 truncate">(未分類)</span>
         <span className="font-mono text-xs text-fg-faint md:text-[10px]">
           {rootMemoCount}
@@ -413,7 +408,7 @@ export function FolderTree({
             type="button"
             aria-label="＋ 新しいフォルダ"
             onClick={() => openCreate(null)}
-            className="mt-2 flex min-h-11 w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[15px] text-fg-faint transition-colors hover:bg-night-raised/45 hover:text-fg-dim md:min-h-0 md:gap-1 md:py-1.5 md:text-xs"
+            className="mt-2 flex min-h-11 w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[13px] text-fg-faint transition-colors hover:bg-hover-fill hover:text-fg-dim md:min-h-0 md:gap-1 md:py-2 md:text-xs"
           >
             ＋ 新しいフォルダ
           </button>
@@ -431,12 +426,12 @@ export function FolderTree({
                 value={creatingName}
                 onChange={(event) => setCreatingName(event.target.value)}
                 autoFocus
-                className="min-h-11 min-w-0 flex-1 rounded-md border border-line bg-night px-3 py-2 text-[15px] text-fg placeholder-fg-faint focus:border-lamp/50 focus:outline-none md:min-h-0 md:px-2 md:py-1 md:text-xs"
+                className="min-h-11 min-w-0 flex-1 rounded-md border border-hair-strong bg-night px-3 py-2 text-[15px] text-fg placeholder-fg-faint focus:border-lamp/50 focus:outline-none md:min-h-0 md:px-2 md:py-1 md:text-xs"
               />
               <button
                 type="submit"
                 disabled={creatingName.trim().length === 0}
-                className="min-h-11 shrink-0 rounded-md border border-lamp/40 bg-lamp px-3 py-2 text-sm font-bold text-night transition-opacity disabled:cursor-not-allowed disabled:border-line disabled:bg-night-raised disabled:text-fg-faint disabled:opacity-60 md:min-h-0 md:px-2 md:py-1 md:text-[11px]"
+                className="min-h-11 shrink-0 rounded-md border border-lamp/40 bg-lamp px-3 py-2 text-sm font-bold text-night transition-opacity disabled:cursor-not-allowed disabled:border-hair-strong disabled:bg-night-raised disabled:text-fg-faint disabled:opacity-60 md:min-h-0 md:px-2 md:py-1 md:text-[11px]"
               >
                 作成
               </button>
