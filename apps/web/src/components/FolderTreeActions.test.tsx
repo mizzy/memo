@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, test, vi } from "vitest";
 import { folder, node } from "../test/factories.js";
@@ -84,6 +84,40 @@ describe("FolderTree actions", () => {
 
     expect(onRename).toHaveBeenCalledWith("a", "技術ログ");
     expect(onDelete).toHaveBeenCalledWith("a");
+  });
+
+  test("opens a mobile action menu and starts renaming", async () => {
+    const user = userEvent.setup();
+    const onRename = vi.fn();
+    render(
+      <FolderTree
+        nodes={[node({ id: "a", name: "技術メモ", totalMemoCount: 0 })]}
+        selectedFolderId="root"
+        expandedFolderIds={new Set()}
+        rootMemoCount={0}
+        onSelect={vi.fn()}
+        onToggle={vi.fn()}
+        onCreateChild={vi.fn()}
+        onRename={onRename}
+        onMove={vi.fn()}
+        onDelete={vi.fn()}
+      />
+    );
+
+    await user.click(screen.getByRole("button", { name: "フォルダ操作" }));
+    const menu = screen.getByRole("menu", { name: "技術メモの操作" });
+    expect(
+      within(menu).getByRole("menuitem", { name: "子フォルダを作成" })
+    ).toBeInTheDocument();
+
+    await user.click(within(menu).getByRole("menuitem", { name: "リネーム" }));
+
+    expect(
+      screen.queryByRole("menu", { name: "技術メモの操作" })
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "フォルダ名" })).toHaveValue(
+      "技術メモ"
+    );
   });
 
   test("cancels create and rename forms with Escape", async () => {
