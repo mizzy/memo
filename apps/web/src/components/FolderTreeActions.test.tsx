@@ -86,7 +86,7 @@ describe("FolderTree actions", () => {
     expect(onDelete).toHaveBeenCalledWith("a");
   });
 
-  test("opens a mobile action menu and starts renaming", async () => {
+  test("opens mobile inline glyph actions and starts renaming", async () => {
     const user = userEvent.setup();
     const onRename = vi.fn();
     render(
@@ -105,15 +105,34 @@ describe("FolderTree actions", () => {
     );
 
     await user.click(screen.getByRole("button", { name: "フォルダ操作" }));
-    const menu = screen.getByRole("menu", { name: "技術メモの操作" });
-    expect(
-      within(menu).getByRole("menuitem", { name: "子フォルダを作成" })
-    ).toBeInTheDocument();
-
-    await user.click(within(menu).getByRole("menuitem", { name: "リネーム" }));
-
+    const actions = screen.getByRole("group", { name: "技術メモの操作" });
+    const createButton = within(actions).getByRole("button", {
+      name: "子フォルダを作成",
+    });
+    const renameButton = within(actions).getByRole("button", {
+      name: "リネーム",
+    });
+    expect(createButton).toHaveClass("h-10", "w-10");
+    expect(renameButton).toHaveClass("h-10", "w-10");
     expect(
       screen.queryByRole("menu", { name: "技術メモの操作" })
+    ).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "フォルダ操作" }));
+    expect(
+      screen.queryByRole("group", { name: "技術メモの操作" })
+    ).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "フォルダ操作" }));
+    const reopenedActions = screen.getByRole("group", {
+      name: "技術メモの操作",
+    });
+    await user.click(
+      within(reopenedActions).getByRole("button", { name: "リネーム" })
+    );
+
+    expect(
+      screen.queryByRole("group", { name: "技術メモの操作" })
     ).not.toBeInTheDocument();
     expect(screen.getByRole("textbox", { name: "フォルダ名" })).toHaveValue(
       "技術メモ"
