@@ -11,7 +11,7 @@ type Props = {
   folders?: FolderWithCount[];
   onSelect: (folderId: FolderSelection) => void;
   onToggle: (folderId: string) => void;
-  onCreateChild?: (parentId: string, name: string) => void;
+  onCreateChild?: (parentId: string | null, name: string) => void;
   onRename?: (folderId: string, name: string) => void;
   onDelete?: (folderId: string) => void;
   onMove?: (folderId: string, parentId: string | null) => void;
@@ -34,7 +34,9 @@ export function FolderTree({
   onDelete,
   onMove,
 }: Props) {
-  const [creatingParentId, setCreatingParentId] = useState<string | null>(null);
+  const [creatingParentId, setCreatingParentId] = useState<
+    string | null | undefined
+  >(undefined);
   const [creatingName, setCreatingName] = useState("");
   const [renamingFolderId, setRenamingFolderId] = useState<string | null>(null);
   const [renamingName, setRenamingName] = useState("");
@@ -42,7 +44,7 @@ export function FolderTree({
 
   const cancelCreate = () => {
     setCreatingName("");
-    setCreatingParentId(null);
+    setCreatingParentId(undefined);
   };
 
   const cancelRename = () => {
@@ -60,7 +62,14 @@ export function FolderTree({
     cancel();
   };
 
-  const submitCreate = (parentId: string) => {
+  const openCreate = (parentId: string | null) => {
+    setCreatingParentId(parentId);
+    setCreatingName("");
+    setRenamingFolderId(null);
+    setRenamingName("");
+  };
+
+  const submitCreate = (parentId: string | null) => {
     const name = creatingName.trim();
     if (!name) return;
     onCreateChild?.(parentId, name);
@@ -123,12 +132,7 @@ export function FolderTree({
                   type="button"
                   aria-label="子フォルダを作成"
                   title="子フォルダを作成"
-                  onClick={() => {
-                    setCreatingParentId(node.id);
-                    setCreatingName("");
-                    setRenamingFolderId(null);
-                    setRenamingName("");
-                  }}
+                  onClick={() => openCreate(node.id)}
                   className="flex h-5 w-5 items-center justify-center rounded font-mono text-[12px] hover:text-lamp"
                 >
                   ＋
@@ -142,7 +146,7 @@ export function FolderTree({
                   onClick={() => {
                     setRenamingFolderId(node.id);
                     setRenamingName(node.name);
-                    setCreatingParentId(null);
+                    setCreatingParentId(undefined);
                     setCreatingName("");
                   }}
                   className="flex h-5 w-5 items-center justify-center rounded text-[12px] hover:text-lamp"
@@ -265,6 +269,43 @@ export function FolderTree({
           {rootMemoCount}
         </span>
       </button>
+      {onCreateChild && (
+        <>
+          <button
+            type="button"
+            aria-label="＋ 新しいフォルダ"
+            onClick={() => openCreate(null)}
+            className="mt-2 flex w-full items-center gap-1 rounded-lg px-2 py-1.5 text-left text-xs text-fg-faint transition-colors hover:bg-night-raised/45 hover:text-fg-dim"
+          >
+            ＋ 新しいフォルダ
+          </button>
+          {creatingParentId === null && (
+            <form
+              className="mt-1 flex items-center gap-1.5 px-2 pb-1"
+              onSubmit={(event) => {
+                event.preventDefault();
+                submitCreate(null);
+              }}
+              onKeyDown={(event) => cancelOnEscape(event, cancelCreate)}
+            >
+              <input
+                aria-label="新しいフォルダ名"
+                value={creatingName}
+                onChange={(event) => setCreatingName(event.target.value)}
+                autoFocus
+                className="min-w-0 flex-1 rounded-md border border-line bg-night px-2 py-1 text-xs text-fg placeholder-fg-faint focus:border-lamp/50 focus:outline-none"
+              />
+              <button
+                type="submit"
+                disabled={creatingName.trim().length === 0}
+                className="shrink-0 rounded-md border border-lamp/40 bg-lamp px-2 py-1 text-[11px] font-bold text-night transition-opacity disabled:cursor-not-allowed disabled:border-line disabled:bg-night-raised disabled:text-fg-faint disabled:opacity-60"
+              >
+                作成
+              </button>
+            </form>
+          )}
+        </>
+      )}
     </nav>
   );
 }
