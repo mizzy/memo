@@ -1,0 +1,257 @@
+<!-- @dsCard group="Current" -->
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>現状 — モバイル3画面 + ダイアログ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --night: #131722;
+    --night-deep: #0b0e16;
+    --night-panel: #171c29;
+    --night-raised: #1e2434;
+    --line: #2a3145;
+    --fg: #e6e3da;
+    --fg-dim: #9a97a4;
+    --fg-faint: #5d5c6b;
+    --lamp: #e0a458;
+    --lamp-bright: #edb56b;
+    --danger: #e2795e;
+    --lamp-glow: rgba(224,164,88,0.14);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Zen Kaku Gothic New", sans-serif;
+    background: #0b0e16;
+    color: var(--fg);
+    padding: 40px;
+    display: flex;
+    gap: 36px;
+    align-items: flex-start;
+  }
+  .col { display: flex; flex-direction: column; gap: 10px; }
+  .caption {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: var(--fg-dim);
+  }
+  .mobile {
+    width: 300px;
+    height: 620px;
+    background:
+      radial-gradient(ellipse 100% 40% at 80% 0%, var(--lamp-glow), transparent 60%),
+      var(--night);
+    border-radius: 34px;
+    border: 9px solid #05070c;
+    box-shadow: 0 24px 64px -16px rgba(0,0,0,.8);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+  .head {
+    padding: 18px 16px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--line);
+  }
+  .wordmark { font-family: "Fraunces", serif; font-size: 17px; font-weight: 600; }
+  .wordmark i { font-style: normal; color: var(--lamp); }
+  .vault-switcher {
+    margin-left: auto;
+    padding: 8px 12px;
+    background: var(--night-raised);
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12.5px;
+    font-weight: 700;
+  }
+  .vault-switcher .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--lamp); box-shadow: 0 0 8px var(--lamp); }
+  .search {
+    margin: 12px 14px 6px;
+    background: var(--night-deep);
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    padding: 10px 13px;
+    font-size: 13px;
+    color: var(--fg-faint);
+  }
+  .tree { padding: 6px 10px; font-size: 14.5px; }
+  .row {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 11px 8px;
+    border-radius: 9px;
+    color: var(--fg-dim);
+  }
+  .row .chev { width: 22px; font-size: 15px; color: var(--fg-dim); text-align: center; }
+  .row .name { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--fg); }
+  .row .count { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--fg-faint); }
+  .row .kebab { width: 40px; height: 40px; margin: -8px 0; display: flex; align-items: center; justify-content: center; color: var(--fg-faint); font-size: 16px; }
+  .row.active { background: linear-gradient(140deg, rgba(224,164,88,.12), rgba(224,164,88,.03) 55%), var(--night-raised); }
+  .row.active .name { color: var(--lamp); }
+  .indent-1 { padding-left: 30px; }
+  /* ⋯タップ時のoverlayグリフ列 */
+  .row .ops {
+    position: absolute;
+    right: 0;
+    top: 0; bottom: 0;
+    display: flex;
+    align-items: center;
+    background: linear-gradient(90deg, transparent, var(--night-raised) 14%);
+    padding: 0 4px 0 22px;
+    border-radius: 0 9px 9px 0;
+  }
+  .row .ops button {
+    width: 40px; height: 40px;
+    border: 0;
+    background: none;
+    color: var(--fg-dim);
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 15px;
+  }
+  .add-folder { padding: 12px 10px; font-size: 13px; color: var(--fg-faint); }
+  .fab {
+    position: absolute;
+    bottom: 20px;
+    right: 16px;
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    background: linear-gradient(160deg, var(--lamp-bright), var(--lamp));
+    color: var(--night);
+    font-size: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 28px -6px rgba(224,164,88,.55);
+  }
+
+  /* ダイアログ */
+  .dialog-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(5,7,12,.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .dialog {
+    background: var(--night-panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 20px;
+    width: 100%;
+  }
+  .dialog h2 { font-size: 15px; color: var(--danger); margin-bottom: 10px; }
+  .dialog p { font-size: 12.5px; line-height: 1.7; color: var(--fg-dim); margin-bottom: 14px; }
+  .dialog input {
+    width: 100%;
+    background: var(--night-deep);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--fg);
+    font-size: 14px;
+    margin-bottom: 14px;
+  }
+  .dialog .actions { display: flex; justify-content: flex-end; gap: 8px; }
+  .dialog .actions button {
+    border: 1px solid var(--line);
+    background: var(--night-raised);
+    color: var(--fg-dim);
+    border-radius: 8px;
+    padding: 9px 14px;
+    font-size: 13px;
+  }
+  .dialog .actions .danger {
+    background: rgba(226,121,94,.12);
+    border-color: rgba(226,121,94,.35);
+    color: var(--danger);
+    opacity: .5;
+  }
+</style>
+</head>
+<body>
+
+<div class="col">
+  <div class="caption">1. ホーム = フォルダツリー (⋯タップでグリフ列overlay)</div>
+  <div class="mobile">
+    <div class="head">
+      <span class="wordmark">memo<i>.</i></span>
+      <span class="vault-switcher"><span class="dot"></span>日々の記録 ⇄</span>
+    </div>
+    <div class="search">検索…</div>
+    <nav class="tree">
+      <div class="row"><span class="chev">▾</span><span class="name">技術メモ</span><span class="count">42</span><span class="kebab">⋯</span></div>
+      <div class="row indent-1 active"><span class="chev">▸</span><span class="name">Cloudflare</span><span class="count">8</span><span class="kebab">⋯</span>
+        <span class="ops"><button>＋</button><button>✎</button><button>→</button><button>×</button></span>
+      </div>
+      <div class="row indent-1"><span class="chev">▸</span><span class="name">Terraform</span><span class="count">11</span><span class="kebab">⋯</span></div>
+      <div class="row"><span class="chev">▸</span><span class="name">料理</span><span class="count">17</span><span class="kebab">⋯</span></div>
+      <div class="row"><span class="name" style="color:var(--fg-faint)">(未分類)</span><span class="count">12</span></div>
+      <div class="add-folder">＋ 新しいフォルダ</div>
+    </nav>
+    <div class="fab">＋</div>
+  </div>
+</div>
+
+<div class="col">
+  <div class="caption">2. フォルダ内メモ一覧</div>
+  <div class="mobile">
+    <div class="head">
+      <span style="font-size:13px;color:var(--fg-dim)">‹ 戻る</span>
+      <span style="font-size:14px;font-weight:700">Cloudflare</span>
+      <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--fg-faint)">8</span>
+    </div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--fg-faint);padding:8px 18px 2px">技術メモ /</div>
+    <div style="padding:0 8px">
+      <div style="margin:3px 0;padding:12px 13px;border-radius:10px;background:linear-gradient(140deg,rgba(224,164,88,.12),rgba(224,164,88,.03) 55%),var(--night-raised)">
+        <div style="font-size:14px;font-weight:700;color:var(--lamp);margin-bottom:4px">Workersの単一構成メモ</div>
+        <div style="font-size:12px;line-height:1.65;color:var(--fg-dim)">静的アセットとAPIを1つのWorkerに同居させると、CORSも二重認証も消える。</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--fg-faint);margin-top:6px">2026-07-03 10:12</div>
+      </div>
+      <div style="margin:3px 0;padding:12px 13px;border-radius:10px">
+        <div style="font-size:14px;font-weight:700;margin-bottom:4px">D1のマイグレーション運用</div>
+        <div style="font-size:12px;line-height:1.65;color:var(--fg-dim)">drizzle-kit generateで生成、wranglerでapply。</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--fg-faint);margin-top:6px">2026-06-30 15:20</div>
+      </div>
+    </div>
+    <div class="fab">＋</div>
+  </div>
+</div>
+
+<div class="col">
+  <div class="caption">3. Vault削除ダイアログ (名前タイプ確認)</div>
+  <div class="mobile">
+    <div class="head">
+      <span class="wordmark">memo<i>.</i></span>
+      <span class="vault-switcher"><span class="dot"></span>日々の記録 ⇄</span>
+    </div>
+    <div class="search">検索…</div>
+    <div class="dialog-backdrop">
+      <div class="dialog">
+        <h2>Vaultを削除</h2>
+        <p>Vault「日々の記録」とその中のメモ128件・フォルダすべてを削除します。確認のためVault名を入力してください</p>
+        <input placeholder="日々の記録">
+        <div class="actions">
+          <button>キャンセル</button>
+          <button class="danger">Vaultを削除する</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
