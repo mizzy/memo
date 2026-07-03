@@ -40,19 +40,38 @@ export function FolderTree({
   const [renamingName, setRenamingName] = useState("");
   const [movingFolderId, setMovingFolderId] = useState<string | null>(null);
 
+  const cancelCreate = () => {
+    setCreatingName("");
+    setCreatingParentId(null);
+  };
+
+  const cancelRename = () => {
+    setRenamingName("");
+    setRenamingFolderId(null);
+  };
+
+  const cancelOnEscape = (
+    event: React.KeyboardEvent<HTMLFormElement>,
+    cancel: () => void
+  ) => {
+    if (event.key !== "Escape") return;
+    event.preventDefault();
+    event.stopPropagation();
+    cancel();
+  };
+
   const submitCreate = (parentId: string) => {
     const name = creatingName.trim();
     if (!name) return;
     onCreateChild?.(parentId, name);
-    setCreatingName("");
-    setCreatingParentId(null);
+    cancelCreate();
   };
 
   const submitRename = (folderId: string) => {
     const name = renamingName.trim();
     if (!name) return;
     onRename?.(folderId, name);
-    setRenamingFolderId(null);
+    cancelRename();
   };
 
   const renderNode = (node: FolderNode) => {
@@ -106,7 +125,9 @@ export function FolderTree({
                   title="子フォルダを作成"
                   onClick={() => {
                     setCreatingParentId(node.id);
+                    setCreatingName("");
                     setRenamingFolderId(null);
+                    setRenamingName("");
                   }}
                   className="flex h-5 w-5 items-center justify-center rounded font-mono text-[12px] hover:text-lamp"
                 >
@@ -122,6 +143,7 @@ export function FolderTree({
                     setRenamingFolderId(node.id);
                     setRenamingName(node.name);
                     setCreatingParentId(null);
+                    setCreatingName("");
                   }}
                   className="flex h-5 w-5 items-center justify-center rounded text-[12px] hover:text-lamp"
                 >
@@ -158,36 +180,52 @@ export function FolderTree({
           )}
           {creatingParentId === node.id && (
             <form
-              className="px-2 pb-2 pl-7"
+              className="flex items-center gap-1.5 px-2 pb-2 pl-7"
               onSubmit={(event) => {
                 event.preventDefault();
                 submitCreate(node.id);
               }}
+              onKeyDown={(event) => cancelOnEscape(event, cancelCreate)}
             >
               <input
                 aria-label="新しいフォルダ名"
                 value={creatingName}
                 onChange={(event) => setCreatingName(event.target.value)}
                 autoFocus
-                className="w-full rounded-md border border-line bg-night px-2 py-1 text-xs text-fg placeholder-fg-faint focus:border-lamp/50 focus:outline-none"
+                className="min-w-0 flex-1 rounded-md border border-line bg-night px-2 py-1 text-xs text-fg placeholder-fg-faint focus:border-lamp/50 focus:outline-none"
               />
+              <button
+                type="submit"
+                disabled={creatingName.trim().length === 0}
+                className="shrink-0 rounded-md border border-lamp/40 bg-lamp px-2 py-1 text-[11px] font-bold text-night transition-opacity disabled:cursor-not-allowed disabled:border-line disabled:bg-night-raised disabled:text-fg-faint disabled:opacity-60"
+              >
+                作成
+              </button>
             </form>
           )}
           {renamingFolderId === node.id && (
             <form
-              className="px-2 pb-2 pl-7"
+              className="flex items-center gap-1.5 px-2 pb-2 pl-7"
               onSubmit={(event) => {
                 event.preventDefault();
                 submitRename(node.id);
               }}
+              onKeyDown={(event) => cancelOnEscape(event, cancelRename)}
             >
               <input
                 aria-label="フォルダ名"
                 value={renamingName}
                 onChange={(event) => setRenamingName(event.target.value)}
                 autoFocus
-                className="w-full rounded-md border border-line bg-night px-2 py-1 text-xs text-fg placeholder-fg-faint focus:border-lamp/50 focus:outline-none"
+                className="min-w-0 flex-1 rounded-md border border-line bg-night px-2 py-1 text-xs text-fg placeholder-fg-faint focus:border-lamp/50 focus:outline-none"
               />
+              <button
+                type="submit"
+                disabled={renamingName.trim().length === 0}
+                className="shrink-0 rounded-md border border-lamp/40 bg-lamp px-2 py-1 text-[11px] font-bold text-night transition-opacity disabled:cursor-not-allowed disabled:border-line disabled:bg-night-raised disabled:text-fg-faint disabled:opacity-60"
+              >
+                変更
+              </button>
             </form>
           )}
           {movingFolderId === node.id && onMove && folders.length > 0 && (

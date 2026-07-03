@@ -64,4 +64,30 @@ describe("VaultSwitcher", () => {
       expect.objectContaining({ id: "v1" })
     );
   });
+
+  test("closes the menu and delete dialog with Escape", async () => {
+    const user = userEvent.setup();
+    render(
+      <VaultSwitcher
+        vaults={[vault("v1", "日々の記録", 3)]}
+        selectedVault={vault("v1", "日々の記録", 3)}
+        onSelect={vi.fn()}
+        onCreate={vi.fn()}
+        onDelete={vi.fn()}
+      />
+    );
+
+    await user.click(screen.getByRole("button", { name: "Vaultを切り替える" }));
+    expect(screen.getByRole("menu")).toBeInTheDocument();
+
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Vaultを切り替える" }));
+    await user.click(screen.getByRole("button", { name: "Vaultを削除" }));
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
 });

@@ -58,6 +58,50 @@ describe("FolderTree actions", () => {
     expect(onDelete).toHaveBeenCalledWith("a");
   });
 
+  test("cancels create and rename forms with Escape", async () => {
+    const user = userEvent.setup();
+    const onCreateChild = vi.fn();
+    const onRename = vi.fn();
+    render(
+      <FolderTree
+        nodes={[node({ id: "a", name: "技術メモ", totalMemoCount: 0 })]}
+        selectedFolderId="a"
+        expandedFolderIds={new Set()}
+        rootMemoCount={0}
+        onSelect={vi.fn()}
+        onToggle={vi.fn()}
+        onCreateChild={onCreateChild}
+        onRename={onRename}
+      />
+    );
+
+    await user.click(screen.getByRole("button", { name: "子フォルダを作成" }));
+    expect(screen.getByRole("button", { name: "作成" })).toBeDisabled();
+    await user.type(
+      screen.getByRole("textbox", { name: "新しいフォルダ名" }),
+      "Cloudflare"
+    );
+    expect(screen.getByRole("button", { name: "作成" })).toBeEnabled();
+
+    await user.keyboard("{Escape}");
+    expect(
+      screen.queryByRole("textbox", { name: "新しいフォルダ名" })
+    ).not.toBeInTheDocument();
+    expect(onCreateChild).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: "リネーム" }));
+    expect(screen.getByRole("button", { name: "変更" })).toBeEnabled();
+    await user.clear(screen.getByRole("textbox", { name: "フォルダ名" }));
+    expect(screen.getByRole("button", { name: "変更" })).toBeDisabled();
+    await user.type(screen.getByRole("textbox", { name: "フォルダ名" }), "技術ログ");
+
+    await user.keyboard("{Escape}");
+    expect(
+      screen.queryByRole("textbox", { name: "フォルダ名" })
+    ).not.toBeInTheDocument();
+    expect(onRename).not.toHaveBeenCalled();
+  });
+
   test("disables the moving folder and descendants in parent picker", () => {
     const folders = [
       folder({ id: "a", parentId: null, name: "技術メモ", memoCount: 0 }),
