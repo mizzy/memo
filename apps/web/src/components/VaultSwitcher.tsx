@@ -21,21 +21,27 @@ export function VaultSwitcher({
   const [name, setName] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<VaultWithCount | null>(null);
   const [deleteName, setDeleteName] = useState("");
+  const canCreate = name.trim().length > 0;
+
+  const closeMenu = () => {
+    setOpen(false);
+    setCreating(false);
+    setName("");
+  };
 
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
     const trimmed = name.trim();
     if (!trimmed) return;
     onCreate(trimmed);
-    setName("");
-    setCreating(false);
-    setOpen(false);
+    closeMenu();
   };
 
   const openDeleteDialog = (vault: VaultWithCount) => {
     setDeleteTarget(vault);
     setDeleteName("");
     setCreating(false);
+    setName("");
     setOpen(false);
   };
 
@@ -51,12 +57,29 @@ export function VaultSwitcher({
     closeDeleteDialog();
   };
 
+  const handleSwitcherKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== "Escape" || !open) return;
+    event.preventDefault();
+    closeMenu();
+  };
+
+  const handleDeleteDialogKeyDown = (
+    event: React.KeyboardEvent<HTMLFormElement>
+  ) => {
+    if (event.key !== "Escape") return;
+    event.preventDefault();
+    closeDeleteDialog();
+  };
+
   return (
-    <div className="relative mb-4">
+    <div className="relative mb-4" onKeyDown={handleSwitcherKeyDown}>
       <button
         type="button"
         aria-label="Vaultを切り替える"
-        onClick={() => setOpen((value) => !value)}
+        onClick={() => {
+          if (open) closeMenu();
+          else setOpen(true);
+        }}
         className="flex w-full items-center gap-2 rounded-lg border border-line bg-night-raised px-3 py-2 text-left text-sm font-bold text-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
       >
         <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-lamp shadow-[0_0_10px_var(--color-lamp)]" />
@@ -105,14 +128,21 @@ export function VaultSwitcher({
           ))}
           <div className="border-t border-line">
             {creating ? (
-              <form onSubmit={submit} className="p-2">
+              <form onSubmit={submit} className="flex items-center gap-2 p-2">
                 <input
                   aria-label="Vault名"
                   value={name}
                   onChange={(event) => setName(event.target.value)}
                   autoFocus
-                  className="w-full rounded-md border border-line bg-night px-2 py-1.5 text-xs text-fg placeholder-fg-faint focus:border-lamp/50 focus:outline-none"
+                  className="min-w-0 flex-1 rounded-md border border-line bg-night px-2 py-1.5 text-xs text-fg placeholder-fg-faint focus:border-lamp/50 focus:outline-none"
                 />
+                <button
+                  type="submit"
+                  disabled={!canCreate}
+                  className="shrink-0 rounded-md border border-lamp/40 bg-lamp px-2 py-1.5 text-[11px] font-bold text-night transition-opacity disabled:cursor-not-allowed disabled:border-line disabled:bg-night-raised disabled:text-fg-faint disabled:opacity-60"
+                >
+                  作成
+                </button>
               </form>
             ) : (
               <button
@@ -135,6 +165,7 @@ export function VaultSwitcher({
             aria-modal="true"
             aria-labelledby="vault-delete-title"
             onSubmit={submitDelete}
+            onKeyDown={handleDeleteDialogKeyDown}
             className="w-full max-w-md rounded-lg border border-line bg-night-raised p-5 shadow-2xl"
           >
             <div
