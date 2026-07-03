@@ -80,7 +80,7 @@ export function VaultSwitcher({
           if (open) closeMenu();
           else setOpen(true);
         }}
-        className="flex w-full items-center gap-2 rounded-lg border border-line bg-night-raised px-3 py-2 text-left text-sm font-bold text-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
+        className="flex min-h-11 w-full items-center gap-2 rounded-lg border border-line bg-night-raised px-3 py-2.5 text-left text-[15px] font-bold text-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] md:min-h-0 md:py-2 md:text-sm"
       >
         <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-lamp shadow-[0_0_10px_var(--color-lamp)]" />
         <span className="min-w-0 flex-1 truncate">
@@ -92,12 +92,12 @@ export function VaultSwitcher({
       {open && (
         <div
           role="menu"
-          className="absolute left-0 right-0 top-[calc(100%+6px)] z-20 overflow-hidden rounded-lg border border-line bg-night-deep text-[12.5px] shadow-2xl"
+          className="absolute left-0 right-0 top-[calc(100%+6px)] z-20 overflow-hidden rounded-lg border border-line bg-night-deep text-sm shadow-2xl md:text-[12.5px]"
         >
           {vaults.map((vault) => (
             <div
               key={vault.id}
-              className={`flex w-full items-center justify-between px-3 py-2 text-left transition-colors hover:bg-night-raised/60 ${
+              className={`flex min-h-11 w-full items-center justify-between px-3 py-1 text-left transition-colors hover:bg-night-raised/60 md:min-h-0 md:py-2 ${
                 vault.id === selectedVault?.id ? "text-lamp" : "text-fg-dim"
               }`}
             >
@@ -109,10 +109,10 @@ export function VaultSwitcher({
                   onSelect(vault);
                   setOpen(false);
                 }}
-                className="flex min-w-0 flex-1 items-center justify-between gap-2 text-left"
+                className="flex min-h-10 min-w-0 flex-1 items-center justify-between gap-2 text-left md:min-h-0"
               >
                 <span className="truncate">{vault.name}</span>
-                <span className="font-mono text-[10px] text-fg-faint">
+                <span className="font-mono text-xs text-fg-faint md:text-[10px]">
                   {vault.memoCount}
                 </span>
               </button>
@@ -120,7 +120,7 @@ export function VaultSwitcher({
                 type="button"
                 aria-label="Vaultを削除"
                 onClick={() => openDeleteDialog(vault)}
-                className="ml-2 flex h-5 w-5 shrink-0 items-center justify-center rounded text-sm text-fg-faint transition-colors hover:bg-danger/10 hover:text-danger"
+                className="ml-2 flex h-10 w-10 shrink-0 items-center justify-center rounded text-base text-fg-faint transition-colors hover:bg-danger/10 hover:text-danger md:h-5 md:w-5 md:text-sm"
               >
                 ×
               </button>
@@ -134,12 +134,12 @@ export function VaultSwitcher({
                   value={name}
                   onChange={(event) => setName(event.target.value)}
                   autoFocus
-                  className="min-w-0 flex-1 rounded-md border border-line bg-night px-2 py-1.5 text-xs text-fg placeholder-fg-faint focus:border-lamp/50 focus:outline-none"
+                  className="min-h-11 min-w-0 flex-1 rounded-md border border-line bg-night px-3 py-2 text-[15px] text-fg placeholder-fg-faint focus:border-lamp/50 focus:outline-none md:min-h-0 md:px-2 md:py-1.5 md:text-xs"
                 />
                 <button
                   type="submit"
                   disabled={!canCreate}
-                  className="shrink-0 rounded-md border border-lamp/40 bg-lamp px-2 py-1.5 text-[11px] font-bold text-night transition-opacity disabled:cursor-not-allowed disabled:border-line disabled:bg-night-raised disabled:text-fg-faint disabled:opacity-60"
+                  className="min-h-11 shrink-0 rounded-md border border-lamp/40 bg-lamp px-3 py-2 text-sm font-bold text-night transition-opacity disabled:cursor-not-allowed disabled:border-line disabled:bg-night-raised disabled:text-fg-faint disabled:opacity-60 md:min-h-0 md:px-2 md:py-1.5 md:text-[11px]"
                 >
                   作成
                 </button>
@@ -149,7 +149,7 @@ export function VaultSwitcher({
                 type="button"
                 role="menuitem"
                 onClick={() => setCreating(true)}
-                className="w-full px-3 py-2 text-left text-fg-faint transition-colors hover:bg-night-raised/60 hover:text-fg-dim"
+                className="min-h-11 w-full px-3 py-2.5 text-left text-fg-faint transition-colors hover:bg-night-raised/60 hover:text-fg-dim md:min-h-0 md:py-2"
               >
                 ＋新しいVault
               </button>
@@ -186,20 +186,20 @@ export function VaultSwitcher({
               value={deleteName}
               onChange={(event) => setDeleteName(event.target.value)}
               autoFocus
-              className="mt-4 w-full rounded-md border border-line bg-night px-3 py-2 text-sm text-fg placeholder-fg-faint focus:border-danger/70 focus:outline-none"
+              className="mt-4 min-h-11 w-full rounded-md border border-line bg-night px-3 py-2 text-sm text-fg placeholder-fg-faint focus:border-danger/70 focus:outline-none md:min-h-0"
             />
             <div className="mt-5 flex justify-end gap-2">
               <button
                 type="button"
                 onClick={closeDeleteDialog}
-                className="rounded-md border border-line px-3 py-2 text-sm text-fg-dim transition-colors hover:bg-night hover:text-fg"
+                className="min-h-11 rounded-md border border-line px-3 py-2 text-sm text-fg-dim transition-colors hover:bg-night hover:text-fg md:min-h-0"
               >
                 キャンセル
               </button>
               <button
                 type="submit"
                 disabled={deleteName !== deleteTarget.name}
-                className="rounded-md bg-danger px-3 py-2 text-sm font-bold text-night transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
+                className="min-h-11 rounded-md bg-danger px-3 py-2 text-sm font-bold text-night transition-opacity disabled:cursor-not-allowed disabled:opacity-40 md:min-h-0"
               >
                 Vaultを削除する
               </button>

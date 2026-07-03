@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { FolderSelection, FolderWithCount } from "@memo/shared";
 import type { FolderNode } from "../folders.js";
 import { FolderParentPicker } from "./FolderParentPicker.js";
@@ -41,6 +41,31 @@ export function FolderTree({
   const [renamingFolderId, setRenamingFolderId] = useState<string | null>(null);
   const [renamingName, setRenamingName] = useState("");
   const [movingFolderId, setMovingFolderId] = useState<string | null>(null);
+  const [openActionMenuFolderId, setOpenActionMenuFolderId] = useState<
+    string | null
+  >(null);
+
+  useEffect(() => {
+    if (!openActionMenuFolderId) return;
+
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setOpenActionMenuFolderId(null);
+    };
+    const closeOnOutsidePointerDown = (event: PointerEvent) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      if (target.closest("[data-folder-actions-root]")) return;
+      setOpenActionMenuFolderId(null);
+    };
+
+    document.addEventListener("keydown", closeOnEscape);
+    document.addEventListener("pointerdown", closeOnOutsidePointerDown);
+    return () => {
+      document.removeEventListener("keydown", closeOnEscape);
+      document.removeEventListener("pointerdown", closeOnOutsidePointerDown);
+    };
+  }, [openActionMenuFolderId]);
 
   const cancelCreate = () => {
     setCreatingName("");
@@ -87,10 +112,32 @@ export function FolderTree({
     const expanded = expandedFolderIds.has(node.id);
     const active = node.id === selectedFolderId;
     const hasChildren = node.children.length > 0;
-    const hasActions = onCreateChild || onRename || onMove || onDelete;
-    const actionVisibility = active
-      ? "opacity-100 pointer-events-auto md:pointer-events-none md:opacity-0 md:group-focus-within:pointer-events-auto md:group-focus-within:opacity-100 md:group-hover:pointer-events-auto md:group-hover:opacity-100"
-      : "pointer-events-none opacity-0 md:group-focus-within:pointer-events-auto md:group-focus-within:opacity-100 md:group-hover:pointer-events-auto md:group-hover:opacity-100";
+    const actionCount = [onCreateChild, onRename, onMove, onDelete].filter(
+      Boolean
+    ).length;
+    const hasActions = actionCount > 0;
+    const mobileActionMenuOpen = openActionMenuFolderId === node.id;
+    const actionVisibility =
+      "pointer-events-none opacity-0 group-focus-within:pointer-events-auto group-focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100";
+    const openChildCreate = () => {
+      openCreate(node.id);
+      setOpenActionMenuFolderId(null);
+    };
+    const openRename = () => {
+      setRenamingFolderId(node.id);
+      setRenamingName(node.name);
+      setCreatingParentId(undefined);
+      setCreatingName("");
+      setOpenActionMenuFolderId(null);
+    };
+    const toggleMove = () => {
+      setMovingFolderId((current) => (current === node.id ? null : node.id));
+      setOpenActionMenuFolderId(null);
+    };
+    const deleteFolder = () => {
+      onDelete?.(node.id);
+      setOpenActionMenuFolderId(null);
+    };
 
     return (
       <div key={node.id}>
@@ -102,12 +149,12 @@ export function FolderTree({
           }`}
           style={{ marginLeft: node.depth * 18 }}
         >
-          <div className="flex items-center gap-1 px-2 py-1.5 text-[13px]">
+          <div className="flex min-h-11 items-center gap-2 pl-2 pr-2 py-2 text-[15px] md:min-h-0 md:gap-1 md:py-1.5 md:text-[13px]">
             <button
               type="button"
               aria-label={`${node.name}を開閉`}
               onClick={() => onToggle(node.id)}
-              className="flex h-4 w-4 shrink-0 items-center justify-center font-mono text-[10px] text-fg-faint"
+              className="flex h-8 w-8 shrink-0 items-center justify-center font-mono text-sm text-fg-faint md:h-4 md:w-4 md:text-[10px]"
             >
               {hasChildren ? (expanded ? "▾" : "▸") : "·"}
             </button>
@@ -122,17 +169,34 @@ export function FolderTree({
             <span className="font-mono text-[10px] text-fg-faint">
               {node.totalMemoCount}
             </span>
+            {hasActions && (
+              <button
+                type="button"
+                aria-label="フォルダ操作"
+                aria-haspopup="menu"
+                aria-expanded={mobileActionMenuOpen}
+                data-folder-actions-root
+                onClick={() =>
+                  setOpenActionMenuFolderId((current) =>
+                    current === node.id ? null : node.id
+                  )
+                }
+                className="ml-1 flex h-10 w-10 shrink-0 items-center justify-center rounded font-mono text-xl text-fg-faint transition-colors hover:bg-night-raised/70 hover:text-fg md:hidden"
+              >
+                ⋯
+              </button>
+            )}
           </div>
           {hasActions && (
             <div
-              className={`absolute right-1 top-1/2 z-10 flex -translate-y-1/2 items-center gap-0.5 rounded-md border border-line/70 bg-night-raised/95 px-1 py-0.5 text-fg-faint shadow-[0_6px_18px_-10px_rgba(0,0,0,0.9)] transition-opacity ${actionVisibility}`}
+              className={`absolute right-1 top-1/2 z-10 hidden -translate-y-1/2 items-center gap-0.5 rounded-md border border-line/70 bg-night-raised/95 px-1 py-0.5 text-fg-faint shadow-[0_6px_18px_-10px_rgba(0,0,0,0.9)] transition-opacity md:flex ${actionVisibility}`}
             >
               {onCreateChild && (
                 <button
                   type="button"
                   aria-label="子フォルダを作成"
                   title="子フォルダを作成"
-                  onClick={() => openCreate(node.id)}
+                  onClick={openChildCreate}
                   className="flex h-5 w-5 items-center justify-center rounded font-mono text-[12px] hover:text-lamp"
                 >
                   ＋
@@ -143,12 +207,7 @@ export function FolderTree({
                   type="button"
                   aria-label="リネーム"
                   title="リネーム"
-                  onClick={() => {
-                    setRenamingFolderId(node.id);
-                    setRenamingName(node.name);
-                    setCreatingParentId(undefined);
-                    setCreatingName("");
-                  }}
+                  onClick={openRename}
                   className="flex h-5 w-5 items-center justify-center rounded text-[12px] hover:text-lamp"
                 >
                   ✎
@@ -159,11 +218,7 @@ export function FolderTree({
                   type="button"
                   aria-label="移動"
                   title="移動"
-                  onClick={() =>
-                    setMovingFolderId((current) =>
-                      current === node.id ? null : node.id
-                    )
-                  }
+                  onClick={toggleMove}
                   className="flex h-5 w-5 items-center justify-center rounded font-mono text-[12px] hover:text-lamp"
                 >
                   →
@@ -174,7 +229,7 @@ export function FolderTree({
                   type="button"
                   aria-label="削除"
                   title="削除"
-                  onClick={() => onDelete(node.id)}
+                  onClick={deleteFolder}
                   className="flex h-5 w-5 items-center justify-center rounded font-mono text-[12px] hover:text-danger"
                 >
                   ×
@@ -182,9 +237,58 @@ export function FolderTree({
               )}
             </div>
           )}
+          {hasActions && mobileActionMenuOpen && (
+            <div
+              role="menu"
+              aria-label={`${node.name}の操作`}
+              data-folder-actions-root
+              className="mx-2 mb-2 overflow-hidden rounded-md border border-line bg-night-raised/95 text-[15px] text-fg-dim shadow-[0_10px_24px_-18px_rgba(0,0,0,0.9)] md:hidden"
+            >
+              {onCreateChild && (
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={openChildCreate}
+                  className="flex min-h-11 w-full items-center px-3 text-left transition-colors hover:bg-night/70 hover:text-lamp"
+                >
+                  子フォルダを作成
+                </button>
+              )}
+              {onRename && (
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={openRename}
+                  className="flex min-h-11 w-full items-center px-3 text-left transition-colors hover:bg-night/70 hover:text-lamp"
+                >
+                  リネーム
+                </button>
+              )}
+              {onMove && (
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={toggleMove}
+                  className="flex min-h-11 w-full items-center px-3 text-left transition-colors hover:bg-night/70 hover:text-lamp"
+                >
+                  移動
+                </button>
+              )}
+              {onDelete && (
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={deleteFolder}
+                  className="flex min-h-11 w-full items-center px-3 text-left transition-colors hover:bg-danger/10 hover:text-danger"
+                >
+                  削除
+                </button>
+              )}
+            </div>
+          )}
           {creatingParentId === node.id && (
             <form
-              className="flex items-center gap-1.5 px-2 pb-2 pl-7"
+              className="flex items-center gap-2 px-2 pb-2 pl-12 md:gap-1.5 md:pl-7"
               onSubmit={(event) => {
                 event.preventDefault();
                 submitCreate(node.id);
@@ -196,12 +300,12 @@ export function FolderTree({
                 value={creatingName}
                 onChange={(event) => setCreatingName(event.target.value)}
                 autoFocus
-                className="min-w-0 flex-1 rounded-md border border-line bg-night px-2 py-1 text-xs text-fg placeholder-fg-faint focus:border-lamp/50 focus:outline-none"
+                className="min-h-11 min-w-0 flex-1 rounded-md border border-line bg-night px-3 py-2 text-[15px] text-fg placeholder-fg-faint focus:border-lamp/50 focus:outline-none md:min-h-0 md:px-2 md:py-1 md:text-xs"
               />
               <button
                 type="submit"
                 disabled={creatingName.trim().length === 0}
-                className="shrink-0 rounded-md border border-lamp/40 bg-lamp px-2 py-1 text-[11px] font-bold text-night transition-opacity disabled:cursor-not-allowed disabled:border-line disabled:bg-night-raised disabled:text-fg-faint disabled:opacity-60"
+                className="min-h-11 shrink-0 rounded-md border border-lamp/40 bg-lamp px-3 py-2 text-sm font-bold text-night transition-opacity disabled:cursor-not-allowed disabled:border-line disabled:bg-night-raised disabled:text-fg-faint disabled:opacity-60 md:min-h-0 md:px-2 md:py-1 md:text-[11px]"
               >
                 作成
               </button>
@@ -209,7 +313,7 @@ export function FolderTree({
           )}
           {renamingFolderId === node.id && (
             <form
-              className="flex items-center gap-1.5 px-2 pb-2 pl-7"
+              className="flex items-center gap-2 px-2 pb-2 pl-12 md:gap-1.5 md:pl-7"
               onSubmit={(event) => {
                 event.preventDefault();
                 submitRename(node.id);
@@ -221,19 +325,19 @@ export function FolderTree({
                 value={renamingName}
                 onChange={(event) => setRenamingName(event.target.value)}
                 autoFocus
-                className="min-w-0 flex-1 rounded-md border border-line bg-night px-2 py-1 text-xs text-fg placeholder-fg-faint focus:border-lamp/50 focus:outline-none"
+                className="min-h-11 min-w-0 flex-1 rounded-md border border-line bg-night px-3 py-2 text-[15px] text-fg placeholder-fg-faint focus:border-lamp/50 focus:outline-none md:min-h-0 md:px-2 md:py-1 md:text-xs"
               />
               <button
                 type="submit"
                 disabled={renamingName.trim().length === 0}
-                className="shrink-0 rounded-md border border-lamp/40 bg-lamp px-2 py-1 text-[11px] font-bold text-night transition-opacity disabled:cursor-not-allowed disabled:border-line disabled:bg-night-raised disabled:text-fg-faint disabled:opacity-60"
+                className="min-h-11 shrink-0 rounded-md border border-lamp/40 bg-lamp px-3 py-2 text-sm font-bold text-night transition-opacity disabled:cursor-not-allowed disabled:border-line disabled:bg-night-raised disabled:text-fg-faint disabled:opacity-60 md:min-h-0 md:px-2 md:py-1 md:text-[11px]"
               >
                 変更
               </button>
             </form>
           )}
           {movingFolderId === node.id && onMove && folders.length > 0 && (
-            <div className="px-2 pb-2 pl-7">
+            <div className="px-2 pb-2 pl-12 md:pl-7">
               <FolderParentPicker
                 folders={folders}
                 folderId={node.id}
@@ -258,14 +362,14 @@ export function FolderTree({
         type="button"
         aria-label={countLabel("(未分類)", rootMemoCount)}
         onClick={() => onSelect("root")}
-        className={`mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] transition-colors ${
+        className={`mt-1 flex min-h-11 w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[15px] transition-colors md:min-h-0 md:py-1.5 md:text-[13px] ${
           selectedFolderId === "root"
             ? "bg-[linear-gradient(140deg,rgba(224,164,88,0.12),rgba(224,164,88,0.03)_55%)] bg-night-raised text-lamp"
             : "text-fg-faint hover:bg-night-raised/45 hover:text-fg-dim"
         }`}
       >
         <span className="min-w-0 flex-1 truncate">(未分類)</span>
-        <span className="font-mono text-[10px] text-fg-faint">
+        <span className="font-mono text-xs text-fg-faint md:text-[10px]">
           {rootMemoCount}
         </span>
       </button>
@@ -275,13 +379,13 @@ export function FolderTree({
             type="button"
             aria-label="＋ 新しいフォルダ"
             onClick={() => openCreate(null)}
-            className="mt-2 flex w-full items-center gap-1 rounded-lg px-2 py-1.5 text-left text-xs text-fg-faint transition-colors hover:bg-night-raised/45 hover:text-fg-dim"
+            className="mt-2 flex min-h-11 w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[15px] text-fg-faint transition-colors hover:bg-night-raised/45 hover:text-fg-dim md:min-h-0 md:gap-1 md:py-1.5 md:text-xs"
           >
             ＋ 新しいフォルダ
           </button>
           {creatingParentId === null && (
             <form
-              className="mt-1 flex items-center gap-1.5 px-2 pb-1"
+              className="mt-1 flex items-center gap-2 px-2 pb-1 md:gap-1.5"
               onSubmit={(event) => {
                 event.preventDefault();
                 submitCreate(null);
@@ -293,12 +397,12 @@ export function FolderTree({
                 value={creatingName}
                 onChange={(event) => setCreatingName(event.target.value)}
                 autoFocus
-                className="min-w-0 flex-1 rounded-md border border-line bg-night px-2 py-1 text-xs text-fg placeholder-fg-faint focus:border-lamp/50 focus:outline-none"
+                className="min-h-11 min-w-0 flex-1 rounded-md border border-line bg-night px-3 py-2 text-[15px] text-fg placeholder-fg-faint focus:border-lamp/50 focus:outline-none md:min-h-0 md:px-2 md:py-1 md:text-xs"
               />
               <button
                 type="submit"
                 disabled={creatingName.trim().length === 0}
-                className="shrink-0 rounded-md border border-lamp/40 bg-lamp px-2 py-1 text-[11px] font-bold text-night transition-opacity disabled:cursor-not-allowed disabled:border-line disabled:bg-night-raised disabled:text-fg-faint disabled:opacity-60"
+                className="min-h-11 shrink-0 rounded-md border border-lamp/40 bg-lamp px-3 py-2 text-sm font-bold text-night transition-opacity disabled:cursor-not-allowed disabled:border-line disabled:bg-night-raised disabled:text-fg-faint disabled:opacity-60 md:min-h-0 md:px-2 md:py-1 md:text-[11px]"
               >
                 作成
               </button>
