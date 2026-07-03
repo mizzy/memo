@@ -86,7 +86,7 @@ describe("FolderTree actions", () => {
     expect(onDelete).toHaveBeenCalledWith("a");
   });
 
-  test("opens mobile inline glyph actions and starts renaming", async () => {
+  test("opens mobile overlaid glyph actions and starts renaming", async () => {
     const user = userEvent.setup();
     const onRename = vi.fn();
     render(
@@ -106,6 +106,7 @@ describe("FolderTree actions", () => {
 
     await user.click(screen.getByRole("button", { name: "フォルダ操作" }));
     const actions = screen.getByRole("group", { name: "技術メモの操作" });
+    expect(actions).toHaveClass("absolute");
     const createButton = within(actions).getByRole("button", {
       name: "子フォルダを作成",
     });

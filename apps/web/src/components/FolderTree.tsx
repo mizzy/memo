@@ -119,6 +119,9 @@ export function FolderTree({
     const mobileActionsOpen = openMobileActionsFolderId === node.id;
     const actionVisibility =
       "pointer-events-none opacity-0 group-focus-within:pointer-events-auto group-focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100";
+    const mobileActionsBackground = active
+      ? "bg-night-raised/95 before:from-night-raised/95"
+      : "bg-night-deep/95 before:from-night-deep/95";
     const openChildCreate = () => {
       openCreate(node.id);
       setOpenMobileActionsFolderId(null);
@@ -137,6 +140,11 @@ export function FolderTree({
     const deleteFolder = () => {
       onDelete?.(node.id);
       setOpenMobileActionsFolderId(null);
+    };
+    const toggleMobileActions = () => {
+      setOpenMobileActionsFolderId((current) =>
+        current === node.id ? null : node.id
+      );
     };
 
     return (
@@ -177,76 +185,91 @@ export function FolderTree({
             <span className="font-mono text-[10px] text-fg-faint">
               {node.totalMemoCount}
             </span>
-            {hasActions && mobileActionsOpen && (
-              <div
-                role="group"
-                aria-label={`${node.name}の操作`}
-                data-folder-actions-root
-                className="ml-1 flex shrink-0 items-center gap-0.5 rounded-md border border-line/70 bg-night-raised/95 px-0.5 py-0.5 text-fg-faint shadow-[0_6px_18px_-10px_rgba(0,0,0,0.9)] md:hidden"
-              >
-                {onCreateChild && (
-                  <button
-                    type="button"
-                    aria-label="子フォルダを作成"
-                    title="子フォルダを作成"
-                    onClick={openChildCreate}
-                    className="flex h-10 w-10 items-center justify-center rounded font-mono text-lg transition-colors hover:bg-night/70 hover:text-lamp"
-                  >
-                    ＋
-                  </button>
-                )}
-                {onRename && (
-                  <button
-                    type="button"
-                    aria-label="リネーム"
-                    title="リネーム"
-                    onClick={openRename}
-                    className="flex h-10 w-10 items-center justify-center rounded text-lg transition-colors hover:bg-night/70 hover:text-lamp"
-                  >
-                    ✎
-                  </button>
-                )}
-                {onMove && (
-                  <button
-                    type="button"
-                    aria-label="移動"
-                    title="移動"
-                    onClick={toggleMove}
-                    className="flex h-10 w-10 items-center justify-center rounded font-mono text-lg transition-colors hover:bg-night/70 hover:text-lamp"
-                  >
-                    →
-                  </button>
-                )}
-                {onDelete && (
-                  <button
-                    type="button"
-                    aria-label="削除"
-                    title="削除"
-                    onClick={deleteFolder}
-                    className="flex h-10 w-10 items-center justify-center rounded font-mono text-lg transition-colors hover:bg-danger/10 hover:text-danger"
-                  >
-                    ×
-                  </button>
-                )}
-              </div>
-            )}
             {hasActions && (
+              <>
+                {mobileActionsOpen ? (
+                  <span
+                    aria-hidden="true"
+                    className="ml-1 h-10 w-10 shrink-0 md:hidden"
+                  />
+                ) : (
+                  <button
+                    type="button"
+                    aria-label="フォルダ操作"
+                    aria-expanded={false}
+                    data-folder-actions-root
+                    onClick={toggleMobileActions}
+                    className="ml-1 flex h-10 w-10 shrink-0 items-center justify-center rounded font-mono text-xl text-fg-faint transition-colors hover:bg-night-raised/70 hover:text-fg md:hidden"
+                  >
+                    ⋯
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+          {hasActions && mobileActionsOpen && (
+            <div
+              role="group"
+              aria-label={`${node.name}の操作`}
+              data-folder-actions-root
+              className={`absolute right-1.5 top-1/2 z-20 flex -translate-y-1/2 items-center gap-0.5 rounded-md border border-line/70 px-0.5 py-0.5 text-fg-faint shadow-[0_6px_18px_-10px_rgba(0,0,0,0.9)] md:hidden before:pointer-events-none before:absolute before:inset-y-0 before:right-full before:w-8 before:bg-gradient-to-l before:to-transparent ${mobileActionsBackground}`}
+            >
+              {onCreateChild && (
+                <button
+                  type="button"
+                  aria-label="子フォルダを作成"
+                  title="子フォルダを作成"
+                  onClick={openChildCreate}
+                  className="flex h-10 w-10 items-center justify-center rounded font-mono text-lg transition-colors hover:bg-night/70 hover:text-lamp"
+                >
+                  ＋
+                </button>
+              )}
+              {onRename && (
+                <button
+                  type="button"
+                  aria-label="リネーム"
+                  title="リネーム"
+                  onClick={openRename}
+                  className="flex h-10 w-10 items-center justify-center rounded text-lg transition-colors hover:bg-night/70 hover:text-lamp"
+                >
+                  ✎
+                </button>
+              )}
+              {onMove && (
+                <button
+                  type="button"
+                  aria-label="移動"
+                  title="移動"
+                  onClick={toggleMove}
+                  className="flex h-10 w-10 items-center justify-center rounded font-mono text-lg transition-colors hover:bg-night/70 hover:text-lamp"
+                >
+                  →
+                </button>
+              )}
+              {onDelete && (
+                <button
+                  type="button"
+                  aria-label="削除"
+                  title="削除"
+                  onClick={deleteFolder}
+                  className="flex h-10 w-10 items-center justify-center rounded font-mono text-lg transition-colors hover:bg-danger/10 hover:text-danger"
+                >
+                  ×
+                </button>
+              )}
               <button
                 type="button"
                 aria-label="フォルダ操作"
-                aria-expanded={mobileActionsOpen}
-                data-folder-actions-root
-                onClick={() =>
-                  setOpenMobileActionsFolderId((current) =>
-                    current === node.id ? null : node.id
-                  )
-                }
-                className="ml-1 flex h-10 w-10 shrink-0 items-center justify-center rounded font-mono text-xl text-fg-faint transition-colors hover:bg-night-raised/70 hover:text-fg md:hidden"
+                aria-expanded={true}
+                title="フォルダ操作"
+                onClick={toggleMobileActions}
+                className="flex h-10 w-10 items-center justify-center rounded font-mono text-xl transition-colors hover:bg-night/70 hover:text-fg"
               >
                 ⋯
               </button>
-            )}
-          </div>
+            </div>
+          )}
           {hasActions && (
             <div
               className={`absolute right-1 top-1/2 z-10 hidden -translate-y-1/2 items-center gap-0.5 rounded-md border border-line/70 bg-night-raised/95 px-1 py-0.5 text-fg-faint shadow-[0_6px_18px_-10px_rgba(0,0,0,0.9)] transition-opacity md:flex ${actionVisibility}`}
