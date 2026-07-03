@@ -1,0 +1,77 @@
+<!-- @dsCard group="Current" -->
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>現状 — デザイントークン</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --night: #131722;
+    --night-deep: #0b0e16;
+    --night-panel: #171c29;
+    --night-raised: #1e2434;
+    --line: #2a3145;
+    --fg: #e6e3da;
+    --fg-dim: #9a97a4;
+    --fg-faint: #5d5c6b;
+    --lamp: #e0a458;
+    --lamp-bright: #edb56b;
+    --danger: #e2795e;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Zen Kaku Gothic New", sans-serif;
+    background: var(--night);
+    color: var(--fg);
+    padding: 40px;
+    max-width: 900px;
+  }
+  h2 {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    color: var(--fg-faint);
+    margin: 28px 0 12px;
+  }
+  .swatches { display: flex; gap: 10px; flex-wrap: wrap; }
+  .swatch { width: 130px; }
+  .swatch .chip { height: 56px; border-radius: 8px; border: 1px solid var(--line); margin-bottom: 6px; }
+  .swatch .label { font-family: "IBM Plex Mono", monospace; font-size: 10.5px; color: var(--fg-dim); }
+  .type-row { display: flex; align-items: baseline; gap: 20px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+  .type-row .use { width: 220px; font-family: "IBM Plex Mono", monospace; font-size: 10.5px; color: var(--fg-faint); }
+</style>
+</head>
+<body>
+  <h2>COLORS</h2>
+  <div class="swatches">
+    <div class="swatch"><div class="chip" style="background:#131722"></div><div class="label">night #131722 背景</div></div>
+    <div class="swatch"><div class="chip" style="background:#0b0e16"></div><div class="label">night-deep #0b0e16</div></div>
+    <div class="swatch"><div class="chip" style="background:#171c29"></div><div class="label">night-panel #171c29</div></div>
+    <div class="swatch"><div class="chip" style="background:#1e2434"></div><div class="label">night-raised #1e2434</div></div>
+    <div class="swatch"><div class="chip" style="background:#2a3145"></div><div class="label">line #2a3145 罫線</div></div>
+    <div class="swatch"><div class="chip" style="background:#e6e3da"></div><div class="label">fg #e6e3da 本文</div></div>
+    <div class="swatch"><div class="chip" style="background:#9a97a4"></div><div class="label">fg-dim #9a97a4</div></div>
+    <div class="swatch"><div class="chip" style="background:#5d5c6b"></div><div class="label">fg-faint #5d5c6b</div></div>
+    <div class="swatch"><div class="chip" style="background:#e0a458"></div><div class="label">lamp #e0a458 アクセント</div></div>
+    <div class="swatch"><div class="chip" style="background:#e2795e"></div><div class="label">danger #e2795e</div></div>
+  </div>
+
+  <h2>TYPOGRAPHY</h2>
+  <div class="type-row"><span class="use">ロゴのみ / Fraunces 600</span><span style="font-family:Fraunces,serif;font-size:22px;font-weight:600">memo<span style="color:var(--lamp)">.</span></span></div>
+  <div class="type-row"><span class="use">タイトル / Zen Kaku Gothic New 700</span><span style="font-size:20px;font-weight:700">Workersの単一構成メモ</span></div>
+  <div class="type-row"><span class="use">本文 / Zen Kaku Gothic New 400 (英字はsize-adjust 106%)</span><span style="font-size:14.5px">静的アセットとAPIをWorkerに同居させる。Cloudflare</span></div>
+  <div class="type-row"><span class="use">メタ情報 / IBM Plex Mono</span><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--fg-faint)">技術メモ / Cloudflare — 2026-07-03 10:12</span></div>
+
+  <h2>PRINCIPLES</h2>
+  <div style="font-size:13px;line-height:2;color:var(--fg-dim)">
+    ・常時表示のステータスインジケータは置かない (異常時のみ表示)<br>
+    ・確定手段はボタンで明示、Escでキャンセル<br>
+    ・タッチターゲットはモバイル44px以上<br>
+    ・「いかにも」なテンプレ的表現は避ける (ターミナル風のコスプレ等)<br>
+    ・書体の統一感を重視 (部分的に浮く書体を使わない)
+  </div>
+</body>
+</html>
