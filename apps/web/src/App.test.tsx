@@ -51,6 +51,54 @@ describe("App folders", () => {
     );
   });
 
+  test("restores the last opened memo for the vault on startup", async () => {
+    localStorage.setItem("memo:lastVaultId", "v1");
+    localStorage.setItem("memo:vault:v1:folderId", "f1");
+    localStorage.setItem("memo:vault:v1:memoId", "m1");
+    mockApi.vaults.list.mockResolvedValue([vault("v1", "日々の記録", 1)]);
+    mockApi.folders.list.mockResolvedValue([
+      folder({ id: "f1", name: "技術メモ", memoCount: 1 }),
+    ]);
+    mockApi.memos.list.mockImplementation((params: { folderId?: string }) =>
+      Promise.resolve(
+        params.folderId === "f1"
+          ? [memo({ id: "m1", vaultId: "v1", folderId: "f1", title: "復元対象" })]
+          : []
+      )
+    );
+
+    render(<App />);
+
+    await waitFor(() =>
+      expect(
+        (screen.getByPlaceholderText("タイトル") as HTMLInputElement).value
+      ).toBe("復元対象")
+    );
+  });
+
+  test("does not restore a memo that is no longer in the folder", async () => {
+    localStorage.setItem("memo:lastVaultId", "v1");
+    localStorage.setItem("memo:vault:v1:folderId", "f1");
+    localStorage.setItem("memo:vault:v1:memoId", "gone");
+    mockApi.vaults.list.mockResolvedValue([vault("v1", "日々の記録", 1)]);
+    mockApi.folders.list.mockResolvedValue([
+      folder({ id: "f1", name: "技術メモ", memoCount: 1 }),
+    ]);
+    mockApi.memos.list.mockResolvedValue([
+      memo({ id: "m1", vaultId: "v1", folderId: "f1", title: "別のメモ" }),
+    ]);
+
+    render(<App />);
+
+    await waitFor(() =>
+      expect(mockApi.memos.list).toHaveBeenCalledWith({
+        vaultId: "v1",
+        folderId: "f1",
+      })
+    );
+    expect(screen.queryByPlaceholderText("タイトル")).toBeNull();
+  });
+
   test("mobile flow opens list from a folder and creates a memo in that folder", async () => {
     const user = userEvent.setup();
     mockApi.vaults.list.mockResolvedValue([vault("v1", "日々の記録", 0)]);

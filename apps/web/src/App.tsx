@@ -71,6 +71,10 @@ export function App() {
   const searchRef = useRef<HTMLInputElement>(null);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingRef = useRef<{ title: string; content: string } | null>(null);
+  const pendingRestoreMemoRef = useRef<{
+    memoId: string;
+    folderId: FolderSelection;
+  } | null>(null);
 
   const selectedVaultId = selectedVault?.id ?? null;
   const folderNodes = useMemo(() => buildFolderTree(folders), [folders]);
@@ -125,6 +129,7 @@ export function App() {
     setTitle("");
     setContent("");
     setConfirmingDelete(false);
+    pendingRestoreMemoRef.current = null;
 
     loadFolders(selectedVaultId).then((loadedFolders) => {
       if (cancelled) return;
@@ -144,6 +149,13 @@ export function App() {
           `memo:vault:${selectedVaultId}:expandedFolderIds`
         )
       );
+
+      const savedMemoId = localStorage.getItem(
+        `memo:vault:${selectedVaultId}:memoId`
+      );
+      pendingRestoreMemoRef.current = savedMemoId
+        ? { memoId: savedMemoId, folderId: restoredFolderId }
+        : null;
 
       setSelectedFolderId(restoredFolderId);
       setExpandedFolderIds(
@@ -176,7 +188,26 @@ export function App() {
         ? { vaultId: selectedVaultId, q: trimmedSearch }
         : { vaultId: selectedVaultId, folderId: selectedFolderId };
       const data = await api.memos.list(params);
-      if (!cancelled) setMemos(data);
+      if (cancelled) return;
+      setMemos(data);
+
+      const pendingRestore = pendingRestoreMemoRef.current;
+      if (
+        pendingRestore &&
+        !trimmedSearch &&
+        pendingRestore.folderId === selectedFolderId
+      ) {
+        pendingRestoreMemoRef.current = null;
+        const memoToRestore = data.find(
+          (memo) => memo.id === pendingRestore.memoId
+        );
+        if (memoToRestore) {
+          setSelectedMemo(memoToRestore);
+          setTitle(memoToRestore.title);
+          setContent(memoToRestore.content);
+          setConfirmingDelete(false);
+        }
+      }
     }, search ? 250 : 0);
 
     return () => {
@@ -347,6 +378,9 @@ export function App() {
     setContent(memo.content);
     setConfirmingDelete(false);
     setMobileView("editor");
+    if (selectedVaultId) {
+      localStorage.setItem(`memo:vault:${selectedVaultId}:memoId`, memo.id);
+    }
   };
 
   const handleCreateMemo = async () => {
@@ -449,6 +483,10 @@ export function App() {
     await api.memos.delete(selectedMemo.id);
     setMemos((prev) => prev.filter((memo) => memo.id !== selectedMemo.id));
     bumpVaultCount(selectedVault.id, -1);
+    const restoreKey = `memo:vault:${selectedVault.id}:memoId`;
+    if (localStorage.getItem(restoreKey) === selectedMemo.id) {
+      localStorage.removeItem(restoreKey);
+    }
     setSelectedMemo(null);
     setTitle("");
     setContent("");

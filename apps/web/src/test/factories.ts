@@ -28,13 +28,15 @@ export function memo(input: {
   id: string;
   vaultId: string;
   folderId: string | null;
+  title?: string;
+  content?: string;
 }) {
   return {
     id: input.id,
     vaultId: input.vaultId,
     folderId: input.folderId,
-    title: "",
-    content: "",
+    title: input.title ?? "",
+    content: input.content ?? "",
     createdAt: now,
     updatedAt: now,
   };
