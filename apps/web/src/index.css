@@ -182,6 +182,14 @@ body {
   margin: 0.8em 0;
 }
 
+.tiptap ul {
+  list-style: disc;
+}
+
+.tiptap ol {
+  list-style: decimal;
+}
+
 .tiptap li + li {
   margin-top: 0.3em;
 }
