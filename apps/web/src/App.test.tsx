@@ -1,4 +1,10 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { folder, memo, vault } from "./test/factories.js";
@@ -97,6 +103,49 @@ describe("App folders", () => {
       })
     );
     expect(screen.queryByPlaceholderText("タイトル")).toBeNull();
+  });
+
+  test("focuses the search box on Cmd+K but not on Ctrl+K", async () => {
+    mockApi.vaults.list.mockResolvedValue([vault("v1", "日々の記録", 0)]);
+    mockApi.folders.list.mockResolvedValue([]);
+    mockApi.memos.list.mockResolvedValue([]);
+
+    render(<App />);
+    await screen.findAllByPlaceholderText("検索…");
+
+    const isSearchFocused = () =>
+      screen
+        .getAllByPlaceholderText("検索…")
+        .some((input) => input === document.activeElement);
+
+    fireEvent.keyDown(window, { key: "k", ctrlKey: true });
+    expect(isSearchFocused()).toBe(false);
+
+    fireEvent.keyDown(window, { key: "k", metaKey: true });
+    expect(isSearchFocused()).toBe(true);
+  });
+
+  test("creates a memo on Cmd+N but not on Ctrl+N", async () => {
+    mockApi.vaults.list.mockResolvedValue([vault("v1", "日々の記録", 0)]);
+    mockApi.folders.list.mockResolvedValue([]);
+    mockApi.memos.list.mockResolvedValue([]);
+    mockApi.memos.create.mockResolvedValue(
+      memo({ id: "m1", vaultId: "v1", folderId: null })
+    );
+
+    render(<App />);
+    await waitFor(() =>
+      expect(mockApi.memos.list).toHaveBeenCalledWith({
+        vaultId: "v1",
+        folderId: "root",
+      })
+    );
+
+    fireEvent.keyDown(window, { key: "n", ctrlKey: true });
+    expect(mockApi.memos.create).not.toHaveBeenCalled();
+
+    fireEvent.keyDown(window, { key: "n", metaKey: true });
+    await waitFor(() => expect(mockApi.memos.create).toHaveBeenCalled());
   });
 
   test("mobile flow opens list from a folder and creates a memo in that folder", async () => {

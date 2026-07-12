@@ -218,11 +218,11 @@ export function App() {
 
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key === "k") {
+      if (event.metaKey && event.key === "k") {
         event.preventDefault();
         searchRef.current?.focus();
       }
-      if ((event.metaKey || event.ctrlKey) && event.key === "n" && selectedVaultId) {
+      if (event.metaKey && event.key === "n" && selectedVaultId) {
         event.preventDefault();
         handleCreateMemo();
       }
